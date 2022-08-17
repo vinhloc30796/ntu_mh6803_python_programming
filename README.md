@@ -16,4 +16,4 @@ Group project for NTU MSFT, MH6803 course, Python Programming
 * Run `poetry install`
 * Depending on your role:
     * To trigger Notebook, run `poetry run jupyter notebook` or `poetry run jupyter lab` (whichever you prefer)
-    * To run the program, run `poetry run python main.py`
+    * To run the program, run `poetry run python extract.py BTC`
