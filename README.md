@@ -6,9 +6,14 @@ Group project for NTU MSFT, MH6803 course, Python Programming
 ### Requirements
 
 * Python 3.9+
-* Poetry (https://poetry.eustace.io/)
-    * if you're on Mac, follow this instruction: https://python-poetry.org/docs/#osx--linux--bashonwindows-install-instructions
-    * if you're on Windows, then this https://python-poetry.org/docs/#windows-powershell-install-instructions
+* Choose either:
+    * Poetry (https://poetry.eustace.io/)
+        * if you're on Mac, follow this instruction: https://python-poetry.org/docs/#osx--linux--bashonwindows-install-instructions
+        * if you're on Windows, then this https://python-poetry.org/docs/#windows-powershell-install-instructions
+    * or Venv:
+        * run `python -m venv mh6803_python_programming`
+        * then `source mh6803_python_programming/bin/activate`
+        * then `pip install -r requirements.txt`
 
 ### Steps
 
