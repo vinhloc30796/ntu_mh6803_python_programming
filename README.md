@@ -40,7 +40,7 @@ Group project for NTU MSFT, MH6803 course, Python Programming
 
 **Method 1:**
 * Run `poetry run python cli.py` to go through the CLI wizard
-* Video: https://www.loom.com/share/94643df8f3764f5aa3e8ab0fd0e5e6cf
+* Video: https://www.loom.com/share/31f910f24b6645f2b3e73ed7a977bf86
 
 **Method 2:**
 * Run `poetry run python source/main.py <command>` to test each component of the wizard 
