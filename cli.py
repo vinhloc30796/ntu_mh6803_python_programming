@@ -103,6 +103,8 @@ def main() -> None:
     print(separator)
     coin, start_date, end_date = get_user_input_for_chart()
     print(separator)
+    desc = get_coin_description(coin)
+    print(desc, "\n", separator)
     ax = show_chart(coin, start_date, end_date, export=True)
     print(separator)
     years_to_retire = show_retirement_goal(coin, start_date, end_date)
