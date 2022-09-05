@@ -205,7 +205,6 @@ def calculate_annualized_returns(prices: List[float], granularity: str = "daily"
 
 def calculate_high(prices: List[float]) -> float:
     ### Samuel ###
-
     """
     Take in the list of prices (default to daily granularity)
     and return the high.
@@ -250,15 +249,20 @@ def calculate_years_to_retire(
     prices: List[float],
     granularity: str = "daily",
 ) -> float:
-
+    ### Li ZhuangJing ###
     """
-    Params:
+    Calculate the number of years to retire
+    assuming that returns are constant
+    and calculated from the list of prices (as close price / open price, annualized)
+
+    Args:
     - starting_asset (float) e.g. 150,000 USD or 300,000 SGD
     - retirement_goal (float) e.g. 150,000 USD or 300,000 SGD
     - prices: and the list of prices (e.g. [1,2,3,4])
     (and optionally, the granularity of the prices data)
 
-    and return how many years it would take to reach the retirement goal.
+    Outputs:
+    - years_to_retire (float) e.g. 10.5
     """
     # Prep & test
     annual_returns = calculate_annualized_returns(prices, granularity)
