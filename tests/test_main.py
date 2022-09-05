@@ -21,15 +21,15 @@ def test_calc_returns():
         ([1.0, 0.5, .75, 1.25, 2.01, 3.01, 4.01, 1.01], 0.6801),
     ]
     for input, expected in tests:
-        assert abs(calculate_returns(input) - expected), f"Should be within 0.0001 of expected ({expected:0.4%})"
+        assert abs(calculate_annualized_returns(input) - expected), f"Should be within 0.0001 of expected ({expected:0.4%})"
 
 def test_hilo():
     assert calculate_high([1.0, 2.4, 5.0, 4.5, 0.1, 0.9]) == 5
     assert calculate_low([1.0, 2.0]) == 1.0
 
 def test_calc_vol():
-    assert calculate_volatility([1.0, 2.0], "daily") == 0.0, "Vol should be 0.0 (because there's only one returns)"
-    assert calculate_volatility([1.0, 1.5, 2.25], "daily") == 0.0, "Vol should be 0.0 (because returns are consistent)"
+    assert calculate_annualized_volatility([1.0, 2.0], "daily") == 0.0, "Vol should be 0.0 (because there's only one returns)"
+    assert calculate_annualized_volatility([1.0, 1.5, 2.25], "daily") == 0.0, "Vol should be 0.0 (because returns are consistent)"
 
 def test_calc_retirement():
     # Zero years

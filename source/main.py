@@ -1,6 +1,5 @@
 # Base
-from multiprocessing.sharedctypes import Value
-from typing import List, Dict, Tuple, Optional
+from typing import List, Tuple, Optional
 
 # Data
 import time
@@ -8,10 +7,6 @@ import requests
 import pandas as pd
 import numpy as np
 from datetime import datetime
-
-# Plotting
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 
 # CLI
 from fire import Fire
@@ -155,39 +150,6 @@ def get_user_input_for_chart() -> Tuple[str, str, str]:
     return coin, start_date, end_date  # Tuple
 
 
-def show_chart(export: bool = False) -> None:
-    ### Loc Nguyen ###
-    """
-    The main function
-
-    1) get the user input
-    2) get the price data
-    3) show the chart (TODO)
-    """
-    # Input & process
-    coin, start_date, end_date = get_user_input_for_chart()
-    start_unix, end_unix = convert_dates_to_unix(start_date, end_date)
-    # Get price
-    time_prices: List[List[int, float]] = get_price(coin, start_unix, end_unix)
-
-    fig, ax = plt.subplots(figsize=(10, 5))
-    times = [
-        mdates.date2num(datetime.fromtimestamp(each[0] / 1000.0))
-        for each in time_prices
-    ]
-    prices = [each[1] for each in time_prices]
-    ax.plot(times, prices)
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%d/%m/%Y"))
-
-    if export:
-        filename = f"./{coin},{start_date}--{end_date}.png"
-        ax.figure.savefig(filename)
-        print(f"Saved to {filename}!")
-
-    # Display
-    return ax
-
-
 def get_user_input_for_retirement() -> float:
     ### Li ZhuangJing ###
     """
@@ -199,12 +161,19 @@ def get_user_input_for_retirement() -> float:
     Output:
     - retirement_goal (float) e.g. 150,000.00 or 1,000,000.05
     """
-    msg = "Please enter the retirement monetary goal you want to achieve: "
-    retirement_goal = float(input(msg))
-    return retirement_goal
+    # Starting asset (i.e. net worth) 
+    start_msg = "Please enter your current net worth: "
+    starting_asset = float(input(start_msg))
+
+    # Retirement goal
+    goal_msg = "Please enter the retirement monetary goal you want to achieve: "
+    retirement_goal = float(input(goal_msg))
+    
+    # Return
+    return starting_asset, retirement_goal
 
 
-def calculate_returns(prices: List[float], granularity: str = "daily") -> float:
+def calculate_annualized_returns(prices: List[float], granularity: str = "daily") -> float:
     ### Chen Zhu ###
     """
     Take in the list of prices (default to daily granularity)
@@ -292,7 +261,7 @@ def calculate_years_to_retire(
     and return how many years it would take to reach the retirement goal.
     """
     # Prep & test
-    annual_returns = calculate_returns(prices, granularity)
+    annual_returns = calculate_annualized_returns(prices, granularity)
     target_returns = retirement_goal / starting_asset
     if target_returns <= 1:
         return 0 # Already there!
@@ -303,7 +272,7 @@ def calculate_years_to_retire(
         raise ValueError("The annual returns is non-positive. You will never retire!")
     return years_to_retire
 
-def calculate_volatility(
+def calculate_annualized_volatility(
     prices: List[float], granularity: str = "daily"
 ) -> float:
     ### Louis
