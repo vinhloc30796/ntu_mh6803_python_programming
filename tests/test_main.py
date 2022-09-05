@@ -1,4 +1,4 @@
-from main import *
+from ntu_mh6803_python_programming.source.main import *
 
 def test_get_price():
     btc_prices = get_price("bitcoin") 
@@ -8,7 +8,8 @@ def test_get_price():
 
 def test_get_desc():
     expected_output = "Bitcoin is the first successful internet money based on peer-to-peer technology; whereby no central bank or authority is involved in the transaction and production of the Bitcoin currency. It was created by an anonymous individual/group under the name, Satoshi Nakamoto."
-    assert get_coin_description("bitcoin") == expected_output
+    actual_output = get_coin_description("bitcoin")
+    assert get_coin_description("bitcoin") == expected_output, f"Actual: {actual_output}"
 
 def test_date_conversions():
     assert convert_dates_to_unix("2022-07-01", "2022-08-01") == (1656604800, 1659283200) # (1656633600, 1659312000)

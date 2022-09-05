@@ -1,4 +1,5 @@
 # Base
+from multiprocessing.sharedctypes import Value
 from typing import List, Dict, Tuple, Optional
 
 # Data
@@ -317,11 +318,16 @@ def get_coin_description(
 
     response = requests.get(api_url + endpoint)
     try:
-        description = response.json()["description"]["en"].split(".")[:2]
-        return ". ".join(description) + "."
+        description = response.json()["description"]["en"]
+        count_periods, idx = 0, 0
+        while count_periods < 2:
+            if description[idx] == ".":
+                count_periods += 1
+            idx += 1
+        return description[:idx]
     except:
-        return f"Error: No description found. Preview: {response}"
-        
+        raise ValueError(f"Error: No description found. Preview: {response}")
+
 
 if __name__ == "__main__":
     Fire()
