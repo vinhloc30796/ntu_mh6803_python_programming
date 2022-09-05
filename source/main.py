@@ -28,6 +28,36 @@ def get_unix_from_today(days_from_today: int) -> int:
     current_unix = int(round(time.time()))
     return current_unix - (days_from_today * 24 * 60 * 60), current_unix
 
+def get_coin_description(
+    ### Chen Zhu ###
+    coin: str,
+) -> str:
+    """
+    Take in the coin name (e.g. 'bitcoin', 'ethereum')
+    and return 2 sentences of description for the coin
+
+    Param:
+    - coin (str): The token name
+    Output:
+    - description (str): The description from CoinGecko
+
+    Reference: https://www.coingecko.com/en/api/documentation at GET /coins/{id}
+    """
+    api_url = "https://api.coingecko.com/api/v3/"
+    endpoint = f"coins/{coin}/"
+
+    response = requests.get(api_url + endpoint)
+    try:
+        description = response.json()["description"]["en"]
+        count_periods, idx = 0, 0
+        while count_periods < 2:
+            if description[idx] == ".":
+                count_periods += 1
+            idx += 1
+        return description[:idx]
+    except:
+        raise ValueError(f"Error: No description found. Preview: {response}")
+
 
 def get_price(
     coin: str,
@@ -190,14 +220,15 @@ def calculate_returns(prices: List[float], granularity: str = "daily") -> float:
     Output:
     - returns (float): the annualized returns (e.g. 0.2345 or 23.45%)
     """
-    # Calculate returns
-    returns = ((prices[-1] - prices[0]) / prices[0] + 1) ** (1 / (len(prices) - 1))
+    assert len(prices) > 1, "Error: Not enough prices to calculate returns (at least 2 prices)!"
 
     # Annualize according to MULTIPLIERS
     mult = MULTIPLIERS.get(granularity)
     if mult:
-        annual_return = returns**mult - 1
-        return annual_return
+        returns = prices[-1] / prices[0]
+        invested_for = len(prices) - 1
+        annual_returns = returns ** (mult / invested_for) - 1
+        return annual_returns
     raise ValueError(
         "Unsupported granularity. Has to be one of: daily, hourly, minutely"
     )
@@ -244,6 +275,34 @@ def calculate_low(prices: List[float]) -> float:
         print("This is an empty list")
 
 
+def calculate_years_to_retire(
+    starting_asset: float,
+    retirement_goal: float,
+    prices: List[float],
+    granularity: str = "daily",
+) -> float:
+
+    """
+    Params:
+    - starting_asset (float) e.g. 150,000 USD or 300,000 SGD
+    - retirement_goal (float) e.g. 150,000 USD or 300,000 SGD
+    - prices: and the list of prices (e.g. [1,2,3,4])
+    (and optionally, the granularity of the prices data)
+
+    and return how many years it would take to reach the retirement goal.
+    """
+    # Prep & test
+    annual_returns = calculate_returns(prices, granularity)
+    target_returns = retirement_goal / starting_asset
+    if target_returns <= 1:
+        return 0 # Already there!
+    
+    # Calc
+    years_to_retire = target_returns ** (1 / annual_returns) - 1
+    if annual_returns <= 0:
+        raise ValueError("The annual returns is non-positive. You will never retire!")
+    return years_to_retire
+
 def calculate_volatility(
     prices: List[float], granularity: str = "daily"
 ) -> float:
@@ -277,56 +336,6 @@ def calculate_volatility(
     raise ValueError(
         "Unsupported granularity. Has to be one of: daily, hourly, minutely"
     )
-
-
-def calculate_years_to_retire(
-    starting_asset: float,
-    retirement_goal: float,
-    prices: List[float],
-    granularity: str = "daily",
-) -> float:
-
-    """
-    Params:
-    - starting_asset (float) e.g. 150,000 USD or 300,000 SGD
-    - retirement_goal (float) e.g. 150,000 USD or 300,000 SGD
-    - prices: and the list of prices (e.g. [1,2,3,4])
-    (and optionally, the granularity of the prices data)
-
-    and return how many years it would take to reach the retirement goal.
-    """
-    pass
-
-
-def get_coin_description(
-    ### Chen Zhu ###
-    coin: str,
-) -> str:
-    """
-    Take in the coin name (e.g. 'bitcoin', 'ethereum')
-    and return 2 sentences of description for the coin
-
-    Param:
-    - coin (str): The token name
-    Output:
-    - description (str): The description from CoinGecko
-
-    Reference: https://www.coingecko.com/en/api/documentation at GET /coins/{id}
-    """
-    api_url = "https://api.coingecko.com/api/v3/"
-    endpoint = f"coins/{coin}/"
-
-    response = requests.get(api_url + endpoint)
-    try:
-        description = response.json()["description"]["en"]
-        count_periods, idx = 0, 0
-        while count_periods < 2:
-            if description[idx] == ".":
-                count_periods += 1
-            idx += 1
-        return description[:idx]
-    except:
-        raise ValueError(f"Error: No description found. Preview: {response}")
 
 
 if __name__ == "__main__":
