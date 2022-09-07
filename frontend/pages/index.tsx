@@ -6,13 +6,13 @@ import Link from "next/link";
 import styles from "../styles/Home.module.css";
 
 // Mantine
-import { MantineProvider } from "@mantine/core";
+import { Title } from "@mantine/core";
 
 const Home: NextPage = () => {
     return (
         <div className={styles.container}>
             <Head>
-                <title>Crypto Retirement - Group 10</title>
+                <Title order={1}>Crypto Retirement - Group 10</Title>
                 <meta
                     name="description"
                     content="MH6803 - Python Programming"
@@ -30,12 +30,12 @@ const Home: NextPage = () => {
 
                 <div className={styles.grid}>
                     <a href="/prices" className={styles.card}>
-                        <h2>Cryptocurrency Historical Price &rarr;</h2>
+                        <Title order={2}>Cryptocurrency Historical Price &rarr;</Title>
                         <p>Choose a coin & see its historical price!</p>
                     </a>
 
                     <a href="/retire" className={styles.card}>
-                        <h2>Retirement Calculator! &rarr;</h2>
+                        <Title order={2}>Retirement Calculator! &rarr;</Title>
                         <p>Check how long it would take you to retire!</p>
                     </a>
                 </div>

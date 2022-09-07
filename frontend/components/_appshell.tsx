@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { AppShell, Navbar, Header, NavLink } from "@mantine/core";
+import { AppShell, Navbar, Header, NavLink, Title, Grid } from "@mantine/core";
 
 // Subpage
+import CryptoForm from "./_form";
 import type { LayoutProps } from "./_layout_types";
 
 const AppshellLayout = ({ children }: LayoutProps) => {
@@ -33,7 +34,14 @@ const AppshellLayout = ({ children }: LayoutProps) => {
             }
             header={
                 <Header height="100" px="20" p="xs">
-                    <h1>Group 10</h1>
+                    <Grid align="center">
+                        <Grid.Col span={3}>
+                            <Title order={1} ml="md">Group 10</Title>
+                        </Grid.Col>
+                        <Grid.Col span={9}>
+                            <CryptoForm />
+                        </Grid.Col>
+                    </Grid>
                 </Header>
             }
             styles={(theme) => ({

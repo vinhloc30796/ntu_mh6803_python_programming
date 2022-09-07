@@ -1,13 +1,5 @@
 import Head from "next/head";
-import {
-    MantineProvider,
-    AppShell,
-    Navbar,
-    Header,
-    NavLink,
-    Aside,
-    Footer,
-} from "@mantine/core";
+import { MantineProvider } from "@mantine/core";
 
 // Subpage
 import type { LayoutProps } from "./_layout_types";

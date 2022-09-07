@@ -25,14 +25,14 @@ const CryptoForm = () => {
 
     return (
         <Grid align="flex-end">
-            <Grid.Col span={5}>
+            <Grid.Col span={3}>
                 <TextInput
                     label="Coin"
                     placeholder="e.g. bitcoin, ethereum"
                     {...form.getInputProps("coin")}
                 />
             </Grid.Col>
-            <Grid.Col span={5}>
+            <Grid.Col span={7}>
                 <CryptoRange />
             </Grid.Col>
             <Grid.Col span={2}>
