@@ -16,9 +16,14 @@ import { max, extent } from "d3-array";
 
 // Owned
 import AreaChart from "./_price_chart_area";
+import { getPrices, BaseCrypto, getDate, getPrice } from "./_price_chart_data";
 
 // Initialize some variables
-const stock = appleStock.slice(1000);
+// const stock = appleStock.slice(1000);
+var stock: BaseCrypto[] = [{
+    date: "2021-01-01",
+    price: 100
+}]
 const brushMargin = { top: 10, bottom: 0, left: 0, right: 0 };
 const chartSeparation = 30;
 const PATTERN_ID = "brush_pattern";
@@ -31,9 +36,7 @@ const selectedBrushStyle = {
     stroke: "white",
 };
 
-// accessors
-const getDate = (d: AppleStock) => new Date(d.date);
-const getStockValue = (d: AppleStock) => d.close;
+
 
 export type BrushProps = {
     width: number;
@@ -42,7 +45,7 @@ export type BrushProps = {
     compact?: boolean;
 };
 
-function BrushChart({
+async function BrushChart({
     compact = false,
     width,
     height,
@@ -53,6 +56,7 @@ function BrushChart({
         right: 0,
     },
 }: BrushProps) {
+    await stock = getPrices("bitcoin", "2019-01-01", "2019-03-01").data;
     const brushRef = useRef<BaseBrush | null>(null);
     const [filteredStock, setFilteredStock] = useState(stock);
 
@@ -61,7 +65,7 @@ function BrushChart({
         const { x0, x1, y0, y1 } = domain;
         const stockCopy = stock.filter((s) => {
             const x = getDate(s).getTime();
-            const y = getStockValue(s);
+            const y = getPrice(s);
             return x > x0 && x < x1 && y > y0 && y < y1;
         });
         setFilteredStock(stockCopy);
@@ -96,7 +100,7 @@ function BrushChart({
         () =>
             scaleLinear<number>({
                 range: [yMax, 0],
-                domain: [0, max(filteredStock, getStockValue) || 0],
+                domain: [0, max(filteredStock, getPrice) || 0],
                 nice: true,
             }),
         [yMax, filteredStock]
@@ -113,7 +117,7 @@ function BrushChart({
         () =>
             scaleLinear({
                 range: [yBrushMax, 0],
-                domain: [0, max(stock, getStockValue) || 0],
+                domain: [0, max(stock, getPrice) || 0],
                 nice: true,
             }),
         [yBrushMax]

@@ -6,6 +6,9 @@ import { LinearGradient } from "@visx/gradient";
 import { curveMonotoneX } from "@visx/curve";
 import { AppleStock } from "@visx/mock-data/lib/mocks/appleStock";
 
+// Owned
+import { BaseCrypto, getDate, getPrice } from "./_price_chart_data";
+
 // Initialize some variables
 const axisColor = "#fff";
 const axisBottomTickLabelProps = {
@@ -23,10 +26,6 @@ const axisLeftTickLabelProps = {
     fill: axisColor,
 };
 
-// accessors
-const getDate = (d: AppleStock) => new Date(d.date);
-const getStockValue = (d: AppleStock) => d.close;
-
 
 export default function AreaChart({
     data,
@@ -42,7 +41,7 @@ export default function AreaChart({
     left,
     children,
 }: {
-    data: AppleStock[];
+    data: AppleStock[] | BaseCrypto[];
     gradientColor: string;
     xScale: AxisScale<number>;
     yScale: AxisScale<number>;
@@ -66,10 +65,10 @@ export default function AreaChart({
                 toOpacity={0.2}
             />
             <rect x={0} y={0} width={width} rx={14} />
-            <AreaClosed<AppleStock>
+            <AreaClosed<AppleStock | BaseCrypto>
                 data={data}
                 x={(d) => xScale(getDate(d)) || 0}
-                y={(d) => yScale(getStockValue(d)) || 0}
+                y={(d) => yScale(getPrice(d)) || 0}
                 yScale={yScale}
                 strokeWidth={1}
                 stroke="url(#gradient)"
