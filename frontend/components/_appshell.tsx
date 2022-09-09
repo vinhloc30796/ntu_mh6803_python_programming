@@ -1,10 +1,42 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { AppShell, Navbar, Header, NavLink, Title, Grid } from "@mantine/core";
+import {
+    AppShell,
+    Navbar,
+    Header,
+    NavLink,
+    Title,
+    Grid,
+    Space,
+} from "@mantine/core";
 
 // Subpage
 import CryptoForm from "./_form";
+import PriceChart from "./_price_chart";
 import type { LayoutProps } from "./_layout_types";
+
+const NavBar = (router) => {
+    return (
+        <Navbar width={{ base: "25%" }} p="xs">
+            <Navbar.Section grow mt="md">
+                <Link href="/prices" passHref>
+                    <NavLink
+                        component="a"
+                        label="Prices"
+                        active={router.pathname === "/prices"}
+                    />
+                </Link>
+                <Link href="/retire" passHref>
+                    <NavLink
+                        component="a"
+                        label="Retire"
+                        active={router.pathname === "/retire"}
+                    />
+                </Link>
+            </Navbar.Section>
+        </Navbar>
+    );
+};
 
 const AppshellLayout = ({ children }: LayoutProps) => {
     const router = useRouter();
@@ -12,31 +44,14 @@ const AppshellLayout = ({ children }: LayoutProps) => {
         <AppShell
             padding="md"
             fixed={false}
-            navbar={
-                <Navbar width={{ base: 300 }} p="xs">
-                    <Navbar.Section grow mt="md">
-                        <Link href="/prices" passHref>
-                            <NavLink
-                                component="a"
-                                label="Prices"
-                                active={router.pathname === "/prices"}
-                            />
-                        </Link>
-                        <Link href="/retire" passHref>
-                            <NavLink
-                                component="a"
-                                label="Retire"
-                                active={router.pathname === "/retire"}
-                            />
-                        </Link>
-                    </Navbar.Section>
-                </Navbar>
-            }
+            navbar={<NavBar router={router} />}
             header={
                 <Header height="100" px="20" p="xs">
                     <Grid align="center">
                         <Grid.Col span={3}>
-                            <Title order={1} ml="md">Group 10</Title>
+                            <Title order={1} ml="md">
+                                Group 10
+                            </Title>
                         </Grid.Col>
                         <Grid.Col span={9}>
                             <CryptoForm />
@@ -53,6 +68,8 @@ const AppshellLayout = ({ children }: LayoutProps) => {
                 },
             })}
         >
+            <PriceChart />
+            <Space h="md" />
             {children}
         </AppShell>
     );

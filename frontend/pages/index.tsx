@@ -30,7 +30,9 @@ const Home: NextPage = () => {
 
                 <div className={styles.grid}>
                     <a href="/prices" className={styles.card}>
-                        <Title order={2}>Cryptocurrency Historical Price &rarr;</Title>
+                        <Title order={2}>
+                            Cryptocurrency Historical Price &rarr;
+                        </Title>
                         <p>Choose a coin & see its historical price!</p>
                     </a>
 
