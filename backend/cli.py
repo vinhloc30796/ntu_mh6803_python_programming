@@ -10,6 +10,7 @@ from fire import Fire
 
 # Owned code
 from source.main import *
+from source.async_client import get_async_client, get_coin_description
 
 
 def get_prices(
@@ -106,7 +107,7 @@ def main() -> None:
     print(separator)
     time_prices: List = get_prices(coin, start_date, end_date)
     prices: List[float] = [each[1] for each in time_prices]
-    desc = get_coin_description(coin)
+    desc = get_coin_description(coin, get_async_client())
     print(desc, "\n", separator)
     ax = show_chart(time_prices, export=True)
     print(separator)

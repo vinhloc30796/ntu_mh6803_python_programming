@@ -1,15 +1,15 @@
 # Base
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 
 # Data
 import time
-import requests
 import pandas as pd
 import numpy as np
 from datetime import datetime
 
 # CLI
 from fire import Fire
+
 
 coins = ["bitcoin", "ethereum"]
 MULTIPLIERS = {
@@ -22,73 +22,6 @@ MULTIPLIERS = {
 def get_unix_from_today(days_from_today: int) -> int:
     current_unix = int(round(time.time()))
     return current_unix - (days_from_today * 24 * 60 * 60), current_unix
-
-def get_coin_description(
-    ### Chen Zhu ###
-    coin: str,
-) -> str:
-    """
-    Take in the coin name (e.g. 'bitcoin', 'ethereum')
-    and return 2 sentences of description for the coin
-
-    Param:
-    - coin (str): The token name
-    Output:
-    - description (str): The description from CoinGecko
-
-    Reference: https://www.coingecko.com/en/api/documentation at GET /coins/{id}
-    """
-    api_url = "https://api.coingecko.com/api/v3/"
-    endpoint = f"coins/{coin}/"
-
-    response = requests.get(api_url + endpoint)
-    try:
-        description = response.json()["description"]["en"]
-        count_periods, idx = 0, 0
-        while count_periods < 2:
-            if description[idx] == ".":
-                count_periods += 1
-            idx += 1
-        return description[:idx]
-    except:
-        raise ValueError(f"Error: No description found. Preview: {response}")
-
-
-def get_price(
-    coin: str,
-    start_unix: Optional[int] = None,
-    end_unix: Optional[int] = None,
-    vs_currency: Optional[str] = "sgd",
-) -> List[List]:
-    """
-    Take in the coin name, start_unix, end_unix, and comparison currency
-    and return the prices.
-
-    If either start_unix & end_unix are not provided,
-    then default to past 2 days (48 hours).
-
-    Params:
-    - coin (str) e.g. "bitcoin", "ethereum", "dogecoin"
-    - start_unix (int)
-    - end_unix (int)
-    - vs_currency: either "usd" or "sgd"
-
-    TODO: Update "days_from_today" into "start_date" and "end_date"
-    """
-    if (not start_unix) or (not end_unix):
-        start_unix, end_unix = get_unix_from_today(2)
-
-    api_url = "https://api.coingecko.com/api/v3/"
-    endpoint = f"coins/{coin}/market_chart/range/"
-
-    params = {
-        "vs_currency": vs_currency,
-        "from": start_unix,
-        "to": end_unix,
-    }
-
-    response = requests.get(api_url + endpoint, params=params)
-    return response.json()["prices"]
 
 
 def convert_date_to_unix(date_str: str) -> int:
@@ -161,19 +94,21 @@ def get_user_input_for_retirement() -> float:
     Output:
     - retirement_goal (float) e.g. 150,000.00 or 1,000,000.05
     """
-    # Starting asset (i.e. net worth) 
+    # Starting asset (i.e. net worth)
     start_msg = "Please enter your current net worth: "
     starting_asset = float(input(start_msg))
 
     # Retirement goal
     goal_msg = "Please enter the retirement monetary goal you want to achieve: "
     retirement_goal = float(input(goal_msg))
-    
+
     # Return
     return starting_asset, retirement_goal
 
 
-def calculate_annualized_returns(prices: List[float], granularity: str = "daily") -> float:
+def calculate_annualized_returns(
+    prices: List[float], granularity: str = "daily"
+) -> float:
     ### Chen Zhu ###
     """
     Take in the list of prices (default to daily granularity)
@@ -189,7 +124,9 @@ def calculate_annualized_returns(prices: List[float], granularity: str = "daily"
     Output:
     - returns (float): the annualized returns (e.g. 0.2345 or 23.45%)
     """
-    assert len(prices) > 1, "Error: Not enough prices to calculate returns (at least 2 prices)!"
+    assert (
+        len(prices) > 1
+    ), "Error: Not enough prices to calculate returns (at least 2 prices)!"
 
     # Annualize according to MULTIPLIERS
     mult = MULTIPLIERS.get(granularity)
@@ -268,13 +205,14 @@ def calculate_years_to_retire(
     annual_returns = calculate_annualized_returns(prices, granularity)
     target_returns = retirement_goal / starting_asset
     if target_returns <= 1:
-        return 0 # Already there!
-    
+        return 0  # Already there!
+
     # Calc
     years_to_retire = target_returns ** (1 / annual_returns) - 1
     if annual_returns <= 0:
         raise ValueError("The annual returns is non-positive. You will never retire!")
     return years_to_retire
+
 
 def calculate_annualized_volatility(
     prices: List[float], granularity: str = "daily"
