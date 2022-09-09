@@ -44,8 +44,7 @@ async def startup_event():
 @server.on_event("shutdown")
 async def startup_event():
     global async_client
-    async_client.close()
-    logging.info("Closed async client")
+    await async_client.close()
 
 
 @server.get("/health")
@@ -75,41 +74,37 @@ async def api_prices(
     # Calculate date time delta range from unix timestamp
     start_datetime = datetime.fromtimestamp(start_unix)
     end_datetime = datetime.fromtimestamp(end_unix)
-    days_delta = (end_datetime - start_datetime).days
+    start_date: str = start_datetime.strftime("%Y-%m-%d")
+    end_date: str = end_datetime.strftime("%Y-%m-%d")
+    days_delta: int = (end_datetime - start_datetime).days
 
     # Get prices directly if days_delta is no more than 90
     prices = []
     if days_delta <= 90:
-        start_datetime = end_datetime - timedelta(days=90)
-        start_unix = int(start_datetime.timestamp())
-        new_prices = await asyncio.get_event_loop().run_in_executor(
-            runner, get_price, async_client, coin, start_unix, end_unix, vs_currency
-        )
-        prices.extend(new_prices)
-        return prices
+        start_end_chunks = [(start_date, end_date)]
     else:
-        # If larger than 90 days, then chunk into 90 days
         start_end_chunks = []
-        while days_delta > 90:
-            start_datetime = end_datetime - timedelta(days=90)
-            start_unix = int(start_datetime.timestamp())
-            start_end_chunks.append((start_unix, end_unix))
-            end_unix = start_unix
-            days_delta -= 90
-        tasks = []
-        for start_unix, end_unix in start_end_chunks:
-            tasks.append(
-                asyncio.get_event_loop().run_in_executor(
-                    runner,
-                    get_price,
-                    async_client,
-                    coin,
-                    start_unix,
-                    end_unix,
-                    vs_currency,
-                )
-            )
-        new_prices = await asyncio.gather(*tasks)
+
+    # Otherwise, chunk 90 days
+    while days_delta > 90:
+        start_datetime: datetime = end_datetime - timedelta(days=90)
+        start_date: str = start_datetime.strftime("%Y-%m-%d")
+        end_date: str = end_datetime.strftime("%Y-%m-%d")
+        start_end_chunks.append((start_date, end_date))
+        end_date, end_datetime = start_date, start_datetime
+        days_delta -= 90
+
+    print(f"{start_end_chunks=}")
+
+    # Get prices in chunks
+    for start_date, end_date in start_end_chunks:
+        new_prices = await get_price(
+            async_client,
+            coin,
+            start_date, 
+            end_date,
+            vs_currency,
+        )
         prices.extend(new_prices)
 
     return parse_price(prices)

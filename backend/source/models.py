@@ -30,7 +30,11 @@ def parse_price(prices: List[List]) -> List[float]:
     """
     crypto_prices = [
         BaseCryptoPrice(
-            date=datetime.fromtimestamp(date).strftime("%Y-%m-%dT%H:%M:%S.000Z"), 
+            date=(
+                datetime
+                    .fromtimestamp(date / 1000) # because date is in nanoseconds
+                    .strftime("%Y-%m-%dT%H:%M:%S.000Z")
+            ),
             price=price
         )
         for (date, price) in prices

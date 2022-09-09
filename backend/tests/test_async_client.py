@@ -4,7 +4,7 @@ from ..source.async_client import *
 @pytest.mark.asyncio
 async def test_get_price():
     btc_prices = await get_price(get_async_client(), "bitcoin")
-    assert len(btc_prices) == 2136  # should return 48 values (2 days * 24 hours)
+    assert len(btc_prices) == 2160  # should return 48 values (2 days * 24 hours)
     assert isinstance(btc_prices[0][0], int)  # first elem of Tuple should be UNIX time
     assert isinstance(
         btc_prices[0][1], float

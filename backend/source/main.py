@@ -35,6 +35,7 @@ def convert_date_to_unix(date_str: str) -> int:
     Outputs:
     - date_unix (int)
     """
+    print(date_str)
     return int(datetime.strptime(date_str, "%Y-%m-%d").timestamp())
 
 
@@ -66,7 +67,7 @@ def get_default_dates(
     if end_date is None:
         end_date = datetime.now().strftime("%Y-%m-%d")
     if start_date is None:
-        start_date = (datetime.now() - timedelta(days=89)).strftime("%Y-%m-%d")
+        start_date = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
     return convert_dates_to_unix(start_date, end_date)
 
 
@@ -88,7 +89,6 @@ def get_user_input_for_chart() -> Tuple[str, str, str]:
 
     # TODO: Fill out
     start_date = input("Please enter a start date for the coin selected: ")
-
     end_date = input("Please enter an end date for the coin selected: ")
 
     return coin, start_date, end_date  # Tuple
