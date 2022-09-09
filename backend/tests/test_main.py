@@ -1,7 +1,5 @@
 from ..source.main import *
 
-
-
 def test_date_conversions():
     assert convert_dates_to_unix("2022-07-01", "2022-08-01") == (
         1656604800,

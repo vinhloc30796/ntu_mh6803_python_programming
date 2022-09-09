@@ -1,11 +1,11 @@
 # Base
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 # Data
 import time
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # CLI
 from fire import Fire
@@ -57,6 +57,17 @@ def convert_dates_to_unix(start_date: str, end_date: str) -> Tuple[int, int]:
     start_unix = convert_date_to_unix(start_date)
     end_unix = convert_date_to_unix(end_date)
     return start_unix, end_unix
+
+
+def get_default_dates(
+    start_date: Optional[str] = None, 
+    end_date: Optional[str] = None
+) -> Tuple[int, int]:
+    if end_date is None:
+        end_date = datetime.now().strftime("%Y-%m-%d")
+    if start_date is None:
+        start_date = (datetime.now() - timedelta(days=89)).strftime("%Y-%m-%d")
+    return convert_dates_to_unix(start_date, end_date)
 
 
 def get_user_input_for_chart() -> Tuple[str, str, str]:

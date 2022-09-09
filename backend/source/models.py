@@ -9,7 +9,7 @@ class BaseCryptoPrice(BaseModel):
     price: float
 
 
-async def parse_price(prices: List[List]) -> List[float]:
+def parse_price(prices: List[List]) -> List[float]:
     """
     Take in the list of prices
     and return the list of prices
@@ -28,15 +28,11 @@ async def parse_price(prices: List[List]) -> List[float]:
             ...
         ]
     """
-    timestamp_unix = [prices[0] for price in prices]
-    timestamp_iso_str = [
-        datetime.fromtimestamp(date).strftime("%Y-%m-%dT&H:%M:%S.000Z")
-        for date in timestamp_unix
-    ]
-
-    prices = [price[1] for price in prices]
     crypto_prices = [
-        BaseCryptoPrice(date=date, price=price)
-        for (date, price) in zip(timestamp_iso_str, prices)
+        BaseCryptoPrice(
+            date=datetime.fromtimestamp(date).strftime("%Y-%m-%dT%H:%M:%S.000Z"), 
+            price=price
+        )
+        for (date, price) in prices
     ]
     return crypto_prices

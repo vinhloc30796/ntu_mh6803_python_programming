@@ -13,19 +13,6 @@ from source.main import *
 from source.async_client import get_async_client, get_coin_description
 
 
-def get_prices(
-    coin: str,
-    start_date: str,
-    end_date: str,
-) -> List[float]:
-    start_unix, end_unix = convert_dates_to_unix(start_date, end_date)
-    # Get price
-    time_prices: List[List[int, float]] = get_price(coin, start_unix, end_unix)
-
-    # Return accordingly
-    return time_prices
-
-
 def calc_metrics(prices: List[float], granularity: str = "daily") -> Dict[str, float]:
     ### Loc Nguyen ###
     """

@@ -11,7 +11,7 @@ from aiohttp_retry import (
 )
 
 # Libs
-from .main import get_unix_from_today
+from .main import get_default_dates, get_unix_from_today, convert_dates_to_unix
 
 
 def get_async_client() -> RetryClient:
@@ -64,8 +64,8 @@ async def get_coin_description(
 async def get_price(
     client: RetryClient,
     coin: str,
-    start_unix: Optional[int] = None,
-    end_unix: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
     vs_currency: Optional[str] = "sgd",
 ) -> List[List]:
     """
@@ -83,8 +83,7 @@ async def get_price(
 
     TODO: Update "days_from_today" into "start_date" and "end_date"
     """
-    if (not start_unix) or (not end_unix):
-        start_unix, end_unix = get_unix_from_today(2)
+    start_unix, end_unix = get_default_dates(start_date, end_date)
 
     api_url = "https://api.coingecko.com/api/v3/"
     endpoint = f"coins/{coin}/market_chart/range/"
