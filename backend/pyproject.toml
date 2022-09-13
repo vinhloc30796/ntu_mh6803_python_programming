@@ -17,6 +17,8 @@ asyncio = "^3.4.3"
 fastapi = "^0.82.0"
 uvicorn = "^0.18.3"
 requests = "^2.28.1"
+tk = "^0.1.0"
+ttkthemes = "^3.2.2"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.15.1"

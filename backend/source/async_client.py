@@ -11,7 +11,7 @@ from aiohttp_retry import (
 )
 
 # Libs
-from .main import get_default_dates, get_unix_from_today, convert_dates_to_unix
+from .main import get_default_dates
 
 
 def get_async_client() -> RetryClient:
@@ -94,7 +94,9 @@ async def get_price(
     }
     async with client.get(api_url + endpoint, params=params) as response:
         response_dict = await response.json()
-        return response_dict["prices"]
+        prices = response_dict["prices"]
+        print(f"Found prices {len(prices)}")
+        return prices
 
 
 async def parse_price(

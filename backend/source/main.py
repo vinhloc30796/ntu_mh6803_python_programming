@@ -15,7 +15,8 @@ coins = ["bitcoin", "ethereum"]
 MULTIPLIERS = {
     "daily": 365,
     "hourly": 365 * 24,
-    "minutely": 365 * 24 * 60,
+    # because Coingecko API returns 5-minutely granularity
+    "minutely": 365 * 24 * 60 / 5, 
 }
 
 
@@ -35,7 +36,6 @@ def convert_date_to_unix(date_str: str) -> int:
     Outputs:
     - date_unix (int)
     """
-    print(date_str)
     return int(datetime.strptime(date_str, "%Y-%m-%d").timestamp())
 
 
@@ -69,6 +69,35 @@ def get_default_dates(
     if start_date is None:
         start_date = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
     return convert_dates_to_unix(start_date, end_date)
+
+
+def get_granularity(
+    start_date: str, end_date: str
+) -> str:
+    ### Samuel ###
+    """
+    Take in the start_date and end_date (in YYYY-MM-DD)
+    and return the granularity:
+    - within 1 day: 5-minutely
+    - within 1-90 days: hourly
+    - above 90 days: daily
+
+    Params:
+    - start_date (str)
+    - end_date (str)
+    Output:
+    - granularity (str): can be "daily", "hourly", "minutely" - defaults to daily
+    """
+    start_unix, end_unix = convert_dates_to_unix(start_date, end_date)
+    duration = end_unix - start_unix
+    day_in_seconds = 24 * 60 * 60
+    if duration < day_in_seconds:
+        return "minutely"
+    elif duration < 90 * day_in_seconds:
+        return "hourly"
+    else:
+        return "daily"
+    
 
 
 def get_user_input_for_chart() -> Tuple[str, str, str]:

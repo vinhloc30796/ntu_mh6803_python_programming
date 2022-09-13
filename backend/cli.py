@@ -10,10 +10,12 @@ from fire import Fire
 
 # Owned code
 from source.main import *
-from source.async_client import get_async_client, get_coin_description
+from source.async_client import get_async_client, get_price, get_coin_description
 
-
-def calc_metrics(prices: List[float], granularity: str = "daily") -> Dict[str, float]:
+def calc_metrics(
+    prices: List[float], 
+    granularity: str = "daily",
+) -> Dict[str, float]:
     ### Loc Nguyen ###
     """
     Calculate the metrics for the given prices
@@ -29,7 +31,11 @@ def calc_metrics(prices: List[float], granularity: str = "daily") -> Dict[str, f
     return metrics
 
 
-def show_chart(time_prices: List[float], export: bool = False) -> None:
+def show_chart(
+    time_prices: List[float], 
+    granularity: str = "daily",
+    export: bool = False,
+):
     ### Loc Nguyen ###
     """
     The main function
@@ -40,7 +46,7 @@ def show_chart(time_prices: List[float], export: bool = False) -> None:
     """
     prices: List[float] = [each[1] for each in time_prices]
     # Calculate metrics
-    metrics = calc_metrics(prices)
+    metrics = calc_metrics(prices, granularity)
     for metric, value in metrics.items():
         if "Price" in metric:
             print(f"{metric}: ${value:,.4f}")
@@ -62,19 +68,21 @@ def show_chart(time_prices: List[float], export: bool = False) -> None:
         print(f"Saved to {filename}!")
 
     # Display
-    return ax
+    return fig, ax
 
 
 def show_retirement_goal(
     prices: List[float],
     starting_asset: float,
     retirement_goal: float,
+    granularity: str = "daily",
 ) -> float:
     # Calculate
     years_to_retire: float = calculate_years_to_retire(
         starting_asset=starting_asset,
         retirement_goal=retirement_goal,
         prices=prices,
+        granularity=granularity,
     )
     years = int(years_to_retire)
     months = int(years_to_retire % 1.0 * 12)
@@ -87,23 +95,39 @@ def show_retirement_goal(
     return years_to_retire
 
 
-def main() -> None:
+async def main() -> None:
+    # Init
+    client = get_async_client()
     separator = "-" * 20
+
+    # Chart
     print(separator)
     coin, start_date, end_date = get_user_input_for_chart()
-    print(separator)
-    time_prices: List = get_prices(coin, start_date, end_date)
-    prices: List[float] = [each[1] for each in time_prices]
-    desc = get_coin_description(coin, get_async_client())
-    print(desc, "\n", separator)
-    ax = show_chart(time_prices, export=True)
-    print(separator)
-    starting_asset, retirement_goal = get_user_input_for_retirement()
-    years_to_retire = show_retirement_goal(
-        prices,
-        starting_asset,
-        retirement_goal,
-    )
+    granularity = get_granularity(start_date, end_date)
+    try:
+        ## Price & Description
+        print(separator)
+        time_prices: List = await get_price(client, coin, start_date, end_date)
+        prices: List[float] = [each[1] for each in time_prices]
+        desc = await get_coin_description(client, coin)
+        print(desc, "\n")
+        print(f"Found {len(prices)} {granularity} price points")
+        print(separator)
+        fig, ax = show_chart(time_prices, granularity, export=True)
+
+        # Retirement
+        print(separator)
+        starting_asset, retirement_goal = get_user_input_for_retirement()
+        years_to_retire = show_retirement_goal(
+            prices,
+            starting_asset,
+            retirement_goal,
+            granularity,
+        )
+    except Exception as e:
+        raise e
+    finally:
+        await client.close()
     return None
 
 
