@@ -13,6 +13,13 @@ import PriceChart from "../components/_price_chart";
 
 // Styles
 import useStyles from "../components/_styles";
+import { 
+    BaseCrypto, 
+    getDate,
+    getPrice, 
+    getPrices, 
+    dummyCrypto
+} from "../components/_price_chart_data";
 
 const Retire: NextPageWithLayout = () => {
     const { classes, theme } = useStyles();

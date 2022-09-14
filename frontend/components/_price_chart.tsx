@@ -1,9 +1,25 @@
-import { Group, Card, Title, Text, Image, createStyles } from "@mantine/core";
-import useStyles from "./_styles";
-import BrushChart from "./_price_chart_brush";
+import React, { useEffect, useState } from "react";
 
-const PriceChart = () => {
+import useStyles from "./_styles";
+import { Group, Card, Title, Text, Image } from "@mantine/core";
+
+// Owned Code
+import BrushChart from "./_price_chart_brush";
+import { BaseCrypto, getLastPrice, dummyCrypto } from "./_price_chart_data";
+
+export type PriceChartProps = {
+    priceData: BaseCrypto[];
+};
+
+const PriceChart = (     
+    { priceData }: PriceChartProps,
+) => {
     const { classes, theme } = useStyles();
+    const [receivedPriceData, updateReceivedPriceData] = useState(dummyCrypto);
+    useEffect(() => {
+        updateReceivedPriceData(priceData);
+        console.log("in ../components/_price_chart.tsx: Type of priceData: ", typeof priceData, priceData);
+    }, [priceData]);
 
     return (
         <Card withBorder p="xl" radius="md">
@@ -13,12 +29,12 @@ const PriceChart = () => {
                     height={320}
                     alt="Norway"
                 /> */}
-                <BrushChart width={640} height={320}/>
+                <BrushChart width={640} height={320} priceData={receivedPriceData}/>
             </Card.Section>
             <Card.Section className={classes.section}>
                 <Group position="apart" mt="md">
                     <Text>Closing Price</Text>
-                    <Title order={3}>$ 30,000</Title>
+                    <Title order={3}>$ {getLastPrice(receivedPriceData)}</Title>
                 </Group>
             </Card.Section>
         </Card>
