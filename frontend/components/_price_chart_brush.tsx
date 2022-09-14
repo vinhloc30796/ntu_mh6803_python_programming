@@ -1,5 +1,5 @@
-import React, { useRef, useState, useMemo } from "react";
-import appleStock, { AppleStock } from "@visx/mock-data/lib/mocks/appleStock";
+import React, { useRef, useState, useMemo, useEffect } from "react";
+// import appleStock, { AppleStock } from "@visx/mock-data/lib/mocks/appleStock";
 import { scaleTime, scaleLinear } from "@visx/scale";
 import { Group } from "@visx/group";
 import { Brush } from "@visx/brush";
@@ -12,19 +12,17 @@ import { Bounds } from "@visx/brush/lib/types";
 import { PatternLines } from "@visx/pattern";
 import { LinearGradient } from "@visx/gradient";
 import { ScaleSVG } from "@visx/responsive";
-import { max, extent } from "d3-array";
+import { min, max, extent } from "d3-array";
 
 // Owned
 import AreaChart from "./_price_chart_area";
-// import { getStockValues, BaseCrypto, getDate, getStockValue } from "./_price_chart_data";
+import { dummyCrypto, BaseCrypto, getPrice, getDate } from "./_price_chart_data";
 
 // Initialize some variables
-const stock = appleStock.slice(1000);
-// var stock: BaseCrypto[] = [{
-//     date: "2021-01-01",
-//     price: 100
-// }]
-const brushMargin = { top: 10, bottom: 0, left: 0, right: 0 };
+// const stock = appleStock.slice(1000);
+const LEFT_MARGIN = 50;
+const RIGHT_MARGIN = 20;
+const brushMargin = { top: 10, bottom: 0, left: LEFT_MARGIN, right: RIGHT_MARGIN };
 const chartSeparation = 30;
 const PATTERN_ID = "brush_pattern";
 const GRADIENT_ID = "brush_gradient";
@@ -36,12 +34,11 @@ const selectedBrushStyle = {
     stroke: "white",
 };
 
-const getDate = (d: AppleStock) => new Date(d.date);
-const getStockValue = (d: AppleStock) => d.close;
-
-
+// const getDate = (d: AppleStock) => new Date(d.date);
+// const getStockValue = (d: AppleStock) => d.close;
 
 export type BrushProps = {
+    priceData: BaseCrypto[];
     width: number;
     height: number;
     margin?: { top: number; right: number; bottom: number; left: number };
@@ -49,26 +46,35 @@ export type BrushProps = {
 };
 
 function BrushChart({
-    compact = false,
+    priceData,
     width,
     height,
     margin = {
         top: 20,
-        left: 0,
         bottom: 10,
-        right: 0,
+        left: LEFT_MARGIN,
+        right: RIGHT_MARGIN,
     },
+    compact = false,
 }: BrushProps) {
-    // await stock = getStockValues("bitcoin", "2019-01-01", "2019-03-01").data;
+    // Rerender component when stock changes
+    const [receivedPriceData, updateReceivedPriceData] = useState(dummyCrypto);
+    const [filteredStock, setFilteredStock] = useState(receivedPriceData);
     const brushRef = useRef<BaseBrush | null>(null);
-    const [filteredStock, setFilteredStock] = useState(stock);
-
+    useEffect(() => {
+        const priceDataCopy = [...priceData];
+        updateReceivedPriceData(priceDataCopy);
+        brushRef.current?.reset();
+        console.log("in ../components/_price_chart_brush.tsx: Type of priceData: ", typeof priceData, priceData);
+    }, [priceData]);
+    
+    
     const onBrushChange = (domain: Bounds | null) => {
         if (!domain) return;
         const { x0, x1, y0, y1 } = domain;
-        const stockCopy = stock.filter((s) => {
+        const stockCopy = receivedPriceData.filter((s) => {
             const x = getDate(s).getTime();
-            const y = getStockValues(s);
+            const y = getPrice(s);
             return x > x0 && x < x1 && y > y0 && y < y1;
         });
         setFilteredStock(stockCopy);
@@ -82,12 +88,28 @@ function BrushChart({
     const bottomChartHeight = innerHeight - topChartHeight - chartSeparation;
 
     // bounds
-    const xMax = Math.max(width - margin.left - margin.right, 0);
-    const yMax = Math.max(topChartHeight, 0);
-    const xBrushMax = Math.max(width - brushMargin.left - brushMargin.right, 0);
-    const yBrushMax = Math.max(
-        bottomChartHeight - brushMargin.top - brushMargin.bottom,
-        0
+    const xMax = useMemo(
+        () => Math.max(width - margin.left - margin.right, 0), 
+        [width, receivedPriceData, priceData]
+    );
+    const yMax = useMemo(
+        () => Math.max(topChartHeight, 0), 
+        [topChartHeight, receivedPriceData, priceData]
+    );
+    const yMin = useMemo(
+        () => Math.min(topChartHeight, 0), 
+        [topChartHeight, receivedPriceData, priceData]
+    );
+    const xBrushMax = useMemo(
+        () => Math.max(width - brushMargin.left - brushMargin.right, 0),
+        [width, receivedPriceData, priceData]
+    );
+    const yBrushMax = useMemo(
+        () => Math.max(
+            bottomChartHeight - brushMargin.top - brushMargin.bottom,
+            0
+        ),
+        [bottomChartHeight, receivedPriceData, priceData]
     );
 
     // scales
@@ -97,71 +119,43 @@ function BrushChart({
                 range: [0, xMax],
                 domain: extent(filteredStock, getDate) as [Date, Date],
             }),
-        [xMax, filteredStock]
+        [xMax, filteredStock, receivedPriceData]
     );
     const stockScale = useMemo(
         () =>
             scaleLinear<number>({
-                range: [yMax, 0],
-                domain: [0, max(filteredStock, getStockValue) || 0],
+                range: [yMax, yMin],
+                domain: [min(filteredStock, getPrice), max(filteredStock, getPrice) || 0],
                 nice: true,
             }),
-        [yMax, filteredStock]
+        [yMax, filteredStock, receivedPriceData]
     );
     const brushDateScale = useMemo(
         () =>
             scaleTime<number>({
                 range: [0, xBrushMax],
-                domain: extent(stock, getDate) as [Date, Date],
+                domain: extent(receivedPriceData, getDate) as [Date, Date],
             }),
-        [xBrushMax]
+        [xBrushMax, receivedPriceData]
     );
     const brushStockScale = useMemo(
         () =>
             scaleLinear({
                 range: [yBrushMax, 0],
-                domain: [0, max(stock, getStockValue) || 0],
+                domain: [min(receivedPriceData, getPrice), max(receivedPriceData, getPrice) || 0],
                 nice: true,
             }),
-        [yBrushMax]
+        [yBrushMax, receivedPriceData]
     );
 
     const initialBrushPosition = useMemo(
         () => ({
-            start: { x: brushDateScale(getDate(stock[50])) },
-            end: { x: brushDateScale(getDate(stock[100])) },
+            start: { x: brushDateScale(getDate(receivedPriceData[1])) },
+            end: { x: brushDateScale(getDate(receivedPriceData[20])) },
         }),
-        [brushDateScale]
+        [brushDateScale, receivedPriceData]
     );
-
-    // event handlers
-    const handleClearClick = () => {
-        if (brushRef?.current) {
-            setFilteredStock(stock);
-            brushRef.current.reset();
-        }
-    };
-
-    const handleResetClick = () => {
-        if (brushRef?.current) {
-            const updater: UpdateBrush = (prevBrush) => {
-                const newExtent = brushRef.current!.getExtent(
-                    initialBrushPosition.start,
-                    initialBrushPosition.end
-                );
-
-                const newState: BaseBrushState = {
-                    ...prevBrush,
-                    start: { y: newExtent.y0, x: newExtent.x0 },
-                    end: { y: newExtent.y1, x: newExtent.x1 },
-                    extent: newExtent,
-                };
-
-                return newState;
-            };
-            brushRef.current.updateBrush(updater);
-        }
-    };
+    
 
     return (
         <div>
@@ -193,7 +187,7 @@ function BrushChart({
                 <AreaChart
                     hideBottomAxis
                     hideLeftAxis
-                    data={stock}
+                    data={receivedPriceData}
                     width={width}
                     yMax={yBrushMax}
                     xScale={brushDateScale}
@@ -222,7 +216,7 @@ function BrushChart({
                         brushDirection="horizontal"
                         initialBrushPosition={initialBrushPosition}
                         onChange={onBrushChange}
-                        onClick={() => setFilteredStock(stock)}
+                        onClick={() => setFilteredStock(receivedPriceData)}
                         selectedBoxStyle={selectedBrushStyle}
                         useWindowMoveEvents
                         renderBrushHandle={(props) => (

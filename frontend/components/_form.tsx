@@ -1,56 +1,66 @@
 import { useState } from "react";
-import { useForm } from "@mantine/form";
+import { useForm,  } from "@mantine/form";
 import { DateRangePicker } from "@mantine/dates";
-import { TextInput, Grid, Button, Group } from "@mantine/core";
+import { TextInput, Grid, Button } from "@mantine/core";
+// Data
+import { dummyCrypto, BaseCrypto, getPrice, getDate, extractPrices } from "./_price_chart_data";
 
-const CryptoRange = () => {
-    const [value, setValue] = useState<[Date | null, Date | null]>([
-        new Date(2021, 8, 1),
-        new Date(2021, 11, 1),
-    ]);
-
-    return (
-        <DateRangePicker label="Time Range" value={value} onChange={setValue} />
-    );
+export type CryptoFormProps = {
+    setFilteredStock: React.Dispatch<React.SetStateAction<BaseCrypto[]>>;
 };
 
-const CryptoForm = () => {
+const CryptoForm = (
+    { setFilteredStock }: CryptoFormProps
+) => {
+    const init_start_date = new Date(2021, 8, 1)
+    const init_end_date = new Date(2021, 11, 1)
+    const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
+        init_start_date,
+        init_end_date
+    ]);
+    const onFormSubmit = (coin: string, dateRange: [Date | null, Date | null]) => {
+        // Pull new stock data from API using extractPrices
+        const newStock: Promise<BaseCrypto[]> = extractPrices(coin, dateRange[0], dateRange[1]);
+        // Convert Promise<> to BaseCrypto[]
+        newStock.then((stock) => {
+            setFilteredStock(stock);
+        });
+        // trigger re-render
+        
+    };
+
     const form = useForm({
         initialValues: {
-            coin: "",
-            start_date: "",
-            end_date: "",
+            coin: "bitcoin",
+            start_date: init_start_date,
+            end_date: init_end_date,
         },
     });
 
     return (
         <Grid align="flex-end">
-            <Grid.Col span={3}>
-                <TextInput
-                    label="Coin"
-                    placeholder="e.g. bitcoin, ethereum"
-                    {...form.getInputProps("coin")}
-                />
-            </Grid.Col>
-            <Grid.Col span={7}>
-                <CryptoRange />
-            </Grid.Col>
-            <Grid.Col span={2}>
-                <Button
-                    variant="outline"
-                    onClick={() =>
-                        form.setValues({
-                            // Get coin from TextInput
-                            coin: "SUBMITTED",
-                            // Get start_date from RangeCalendar
-                            start_date: "SUBMITTED",
-                            end_date: "SUBMITTED",
-                        })
-                    }
-                >
-                    Submit
-                </Button>
-            </Grid.Col>
+            <form onSubmit={form.onSubmit(
+                (values) => onFormSubmit(values.coin, dateRange)
+            )}>
+                <Grid.Col span={3}>
+                    <TextInput
+                        label="Coin"
+                        placeholder="e.g. bitcoin, ethereum"
+                        {...form.getInputProps("coin")}
+                    />
+                </Grid.Col>
+                <Grid.Col span={7}>
+                    <DateRangePicker label="Time Range" value={dateRange} onChange={setDateRange} />
+                </Grid.Col>
+                <Grid.Col span={2}>
+                    <Button
+                        variant="outline"
+                        type="submit"
+                    >
+                        Submit
+                    </Button>
+                </Grid.Col>
+            </form>
         </Grid>
     );
 };

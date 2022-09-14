@@ -36,7 +36,7 @@ export default function AreaChart({
     xScale,
     yScale,
     hideBottomAxis = false,
-    hideLeftAxis = true,
+    hideLeftAxis = false,
     top,
     left,
     children,
@@ -83,7 +83,7 @@ export default function AreaChart({
                     stroke={axisColor}
                     tickStroke={axisColor}
                     tickLabelProps={() => axisBottomTickLabelProps}
-                    strokeWidth={0}
+                    strokeWidth={1}
                 />
             )}
             {!hideLeftAxis && (

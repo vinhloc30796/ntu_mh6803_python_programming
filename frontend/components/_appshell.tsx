@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
+import React, { useRef, useState, useMemo } from "react";
 import {
     AppShell,
     Navbar,
@@ -14,6 +15,9 @@ import {
 import CryptoForm from "./_form";
 import PriceChart from "./_price_chart";
 import type { LayoutProps } from "./_layout_types";
+
+// Data
+import { dummyCrypto, BaseCrypto, getPrice, getDate, extractPrices } from "./_price_chart_data";
 
 const NavBar = (router) => {
     return (
@@ -40,6 +44,9 @@ const NavBar = (router) => {
 
 const AppshellLayout = ({ children }: LayoutProps) => {
     const router = useRouter();
+    const [priceData, updatePriceData] = useState(dummyCrypto);
+    console.log("in _appshell.tsx: Type of priceData: ", typeof priceData, priceData);
+
     return (
         <AppShell
             padding="md"
@@ -54,7 +61,7 @@ const AppshellLayout = ({ children }: LayoutProps) => {
                             </Title>
                         </Grid.Col>
                         <Grid.Col span={9}>
-                            <CryptoForm />
+                            <CryptoForm setFilteredStock={updatePriceData}/>
                         </Grid.Col>
                     </Grid>
                 </Header>
@@ -67,8 +74,9 @@ const AppshellLayout = ({ children }: LayoutProps) => {
                             : theme.colors.gray[0],
                 },
             })}
-        >
-            <PriceChart />
+        >   
+            {/* Rerender PriceChart on priceData updates */}
+            <PriceChart priceData={priceData}/>
             <Space h="md" />
             {children}
         </AppShell>
