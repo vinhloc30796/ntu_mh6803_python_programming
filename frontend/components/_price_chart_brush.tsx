@@ -16,14 +16,153 @@ import { max, extent } from "d3-array";
 
 // Owned
 import AreaChart from "./_price_chart_area";
-// import { getStockValues, BaseCrypto, getDate, getStockValue } from "./_price_chart_data";
+import { getPrice, getPrices, BaseCrypto, getDate } from "./_price_chart_data";
 
 // Initialize some variables
-const stock = appleStock.slice(1000);
-// var stock: BaseCrypto[] = [{
-//     date: "2021-01-01",
-//     price: 100
-// }]
+// const stock = appleStock.slice(1000);
+// Dummy Data 
+const stock: BaseCrypto[] = [
+    {
+        date: "2021-01-01T00:00:00.000Z",
+        price: 100
+    },
+    {
+        date: "2021-01-02T00:00:00.000Z",
+        price: 200
+    },
+    {
+        date: "2021-01-03T00:00:00.000Z",
+        price: 300
+    },
+    {
+        date: "2021-01-04T00:00:00.000Z",
+        price: 400
+    },
+    {
+        date: "2021-01-05T00:00:00.000Z",
+        price: 500
+    },
+    {
+        date: "2021-01-06T00:00:00.000Z",
+        price: 600
+    },
+    {
+        date: "2021-01-07T00:00:00.000Z",
+        price: 700
+    },
+    {
+        date: "2021-01-08T00:00:00.000Z",
+        price: 800
+    },
+    {
+        date: "2021-01-09T00:00:00.000Z",
+        price: 900
+    },
+    {
+        date: "2021-01-10T00:00:00.000Z",
+        price: 1000
+    },
+    {
+        date: "2021-01-11T00:00:00.000Z",
+        price: 1100
+    },
+    {
+        date: "2021-01-12T00:00:00.000Z",
+        price: 1200
+    },
+    {
+        date: "2021-01-13T00:00:00.000Z",
+        price: 1300
+    },
+    {
+        date: "2021-01-14T00:00:00.000Z",
+        price: 1400
+    },
+    {
+        date: "2021-01-15T00:00:00.000Z",
+        price: 1500
+    },
+    {
+        date: "2021-01-16T00:00:00.000Z",
+        price: 1600
+    },
+    {
+        date: "2021-01-17T00:00:00.000Z",
+        price: 1700
+    },
+    {
+        date: "2021-01-18T00:00:00.000Z",
+        price: 1800
+    },
+    {
+        date: "2021-01-19T00:00:00.000Z",
+        price: 1900
+    },
+    {
+        date: "2021-01-20T00:00:00.000Z",
+        price: 2000
+    },
+    {
+        date: "2021-01-21T00:00:00.000Z",
+        price: 2100
+    },
+    {
+        date: "2021-01-22T00:00:00.000Z",
+        price: 2200
+    },
+    {
+        date: "2021-01-23T00:00:00.000Z",
+        price: 2300
+    },
+    {
+        date: "2021-01-24T00:00:00.000Z",
+        price: 2400
+    },
+    {
+        date: "2021-01-25T00:00:00.000Z",
+        price: 2500
+    },
+    {
+        date: "2021-01-26T00:00:00.000Z",
+        price: 2600
+    },
+    {
+        date: "2021-01-27T00:00:00.000Z",
+        price: 2700
+    },
+    {
+        date: "2021-01-28T00:00:00.000Z",
+        price: 2800
+    },
+    {
+        date: "2021-01-29T00:00:00.000Z",
+        price: 2900
+    },
+    {
+        date: "2021-01-30T00:00:00.000Z",
+        price: 3000
+    },
+    {
+        date: "2021-01-31T00:00:00.000Z",
+        price: 3100
+    },
+    {
+        date: "2021-02-01T00:00:00.000Z",
+        price: 3200
+    },
+    {
+        date: "2021-02-02T00:00:00.000Z",
+        price: 3300
+    },
+    {
+        date: "2021-02-03T00:00:00.000Z",
+        price: 3400
+    },
+    {
+        date: "2021-02-04T00:00:00.000Z",
+        price: 3500
+    }
+]
 const brushMargin = { top: 10, bottom: 0, left: 0, right: 0 };
 const chartSeparation = 30;
 const PATTERN_ID = "brush_pattern";
@@ -36,8 +175,8 @@ const selectedBrushStyle = {
     stroke: "white",
 };
 
-const getDate = (d: AppleStock) => new Date(d.date);
-const getStockValue = (d: AppleStock) => d.close;
+// const getDate = (d: AppleStock) => new Date(d.date);
+// const getStockValue = (d: AppleStock) => d.close;
 
 
 
@@ -59,7 +198,7 @@ function BrushChart({
         right: 0,
     },
 }: BrushProps) {
-    // await stock = getStockValues("bitcoin", "2019-01-01", "2019-03-01").data;
+    // await stock = getPrices("bitcoin", "2019-01-01", "2019-03-01").data;
     const brushRef = useRef<BaseBrush | null>(null);
     const [filteredStock, setFilteredStock] = useState(stock);
 
@@ -68,7 +207,7 @@ function BrushChart({
         const { x0, x1, y0, y1 } = domain;
         const stockCopy = stock.filter((s) => {
             const x = getDate(s).getTime();
-            const y = getStockValues(s);
+            const y = getPrice(s);
             return x > x0 && x < x1 && y > y0 && y < y1;
         });
         setFilteredStock(stockCopy);
@@ -103,7 +242,7 @@ function BrushChart({
         () =>
             scaleLinear<number>({
                 range: [yMax, 0],
-                domain: [0, max(filteredStock, getStockValue) || 0],
+                domain: [0, max(filteredStock, getPrice) || 0],
                 nice: true,
             }),
         [yMax, filteredStock]
@@ -120,7 +259,7 @@ function BrushChart({
         () =>
             scaleLinear({
                 range: [yBrushMax, 0],
-                domain: [0, max(stock, getStockValue) || 0],
+                domain: [0, max(stock, getPrice) || 0],
                 nice: true,
             }),
         [yBrushMax]
@@ -128,8 +267,8 @@ function BrushChart({
 
     const initialBrushPosition = useMemo(
         () => ({
-            start: { x: brushDateScale(getDate(stock[50])) },
-            end: { x: brushDateScale(getDate(stock[100])) },
+            start: { x: brushDateScale(getDate(stock[1])) },
+            end: { x: brushDateScale(getDate(stock[20])) },
         }),
         [brushDateScale]
     );
