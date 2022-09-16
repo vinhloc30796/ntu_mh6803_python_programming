@@ -39,4 +39,5 @@ def parse_price(prices: List[List]) -> List[float]:
         )
         for (date, price) in prices
     ]
-    return crypto_prices
+    # Sort before returning
+    return sorted(crypto_prices, key=lambda x: x.date)
