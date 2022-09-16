@@ -50,13 +50,8 @@ async def get_coin_description(
         response_dict = await response.json()
     try:
         async with response as response:
-            description = response_dict["description"]["en"]
-        count_periods, idx = 0, 0
-        while count_periods < 2:
-            if description[idx] == ".":
-                count_periods += 1
-            idx += 1
-        return description[:idx]
+            description = response_dict["description"]["en"].split(". ")[:2]
+        return ". ".join(description) + "."
     except:
         raise ValueError(f"Error: No description found. Preview: {response}")
 

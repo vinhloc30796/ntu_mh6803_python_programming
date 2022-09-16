@@ -132,7 +132,7 @@ def make_coin_input_entries(coin_input_frame: ttk.LabelFrame) -> Dict[str, str]:
     return coin_inputs
 
 
-def pull_prices(
+'''def pull_prices(
     async_loop,
     coin: str,
     start_date: str,
@@ -160,8 +160,18 @@ def _thread_pull_prices(
         coin,
         start_date,
         end_date,
+    ))'''
+def pull_prices(
+    async_loop,
+    coin: str,
+    start_date: str,
+    end_date: str,
+):
+    async_loop.run_until_complete(async_pull_prices(
+        coin,
+        start_date,
+        end_date,
     ))
-
 
 async def async_pull_prices(
     coin: str,
@@ -186,6 +196,31 @@ async def async_pull_prices(
     finally:
         await client.close()
 
+
+def pull_description(
+    async_loop,
+    coin: str,
+):
+    async_loop.run_until_complete(async_pull_description(
+        coin
+    ))
+
+    
+async def async_pull_description(
+    coin: str
+):
+    """ Creating and starting 10 tasks. """
+    global description
+    client = get_async_client()
+    
+    try:
+        description = await get_coin_description(client, coin)
+        logging.info("DESC PULL DONE!")
+    except Exception as e:
+        messagebox.showerror("Error", str(e))
+    finally:
+        await client.close()
+        
 
 def button_handler_coin_show_chart(
     main_window: ThemedTk,
@@ -224,9 +259,11 @@ def trigger_render_chart(
     global time_prices
     global prices
     global granularity
+    global description
     
     logging.info("SUBMITTED!")
     pull_prices(loop, coin, start_date, end_date)
+    pull_description(loop, coin)
 
     # Render the chart
     fig, ax = show_chart(
@@ -248,7 +285,7 @@ def trigger_render_chart(
     qns_frame = make_retirement_next_step_frame(main_window)
     frame_output_retirement = trigger_retirement_next_step(main_window, qns_frame, prices, granularity)
 
-    return prices, granularity
+    return prices, granularity, description
 
 
 def make_output_frame(main_window: ThemedTk) -> ttk.LabelFrame:
@@ -334,23 +371,33 @@ def trigger_show_description(
     client = get_async_client()
 
     # Chart
-    try:
+    '''try:
         ## Price & Description
         description = get_coin_description(client, coin)
     except Exception as e:
         messagebox.showerror("Error", str(e))
     finally:
-        loop.run_until_complete(client.close())
+        loop.run_until_complete(client.close())'''
 
     # Display
     style_name = "O.TLabel"
+    # Label
     description_label = ttk.Label(
         output_frame,
-        text=description,
+        text='Coin Description:',
         font=style_title,
         style=style_name,
     )
-    description_label.grid(row=1, column=0, columnspan=2, sticky="w", pady=2)
+    description_label.grid(row=16, column=0, sticky="w", pady=2)
+    # Value
+    description_value = ttk.Label(
+        output_frame,
+        text=description,
+        wraplength=700,
+        font=style_title,
+        style=style_name,
+    )
+    description_value.grid(row=16, column=1, columnspan=2, sticky="w", pady=2)
 
 
 ####################
