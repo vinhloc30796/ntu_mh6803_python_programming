@@ -247,8 +247,8 @@ def calculate_years_to_retire(
     if target_returns <= 1:
         return 0  # Already there!
 
-    # Calc
-    years_to_retire = target_returns ** (1 / annual_returns) - 1
+    # Calc years_to_retire = log(target_returns) / log(annual_returns)
+    years_to_retire = np.log(target_returns) / np.log(annual_returns + 1)
     if annual_returns <= 0:
         raise ValueError("The annual returns is non-positive. You will never retire!")
     return years_to_retire
