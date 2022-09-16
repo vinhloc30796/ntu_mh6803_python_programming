@@ -158,11 +158,15 @@ async def api_retirement_goal(
         end_date,
     )
     # wait until coroutine is done
-    time_prices = await time_prices_coroutine
-    prices = [each[1] for each in time_prices]
+    prices = await api_prices(
+        coin,
+        start_date,
+        end_date,
+    )
+    price_floats = [price.price for price in prices]
     # Calculate
     years_to_retire = show_retirement_goal(
-        prices,
+        price_floats,
         starting_asset,
         retirement_goal,
     )
