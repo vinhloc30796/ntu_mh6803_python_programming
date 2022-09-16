@@ -7,11 +7,22 @@ import ThemeLayout from "../components/_theme";
 
 export default function App(props: AppPropsWithLayout) {
     const { Component, pageProps } = props;
-    const getLayout = Component.getLayout ?? ((page) => page);
+    if (Component.getLayout) {
+        return (
+            <ThemeLayout data={props}>
+                {Component.getLayout(
+                    <Component {...pageProps} />,
+                    pageProps.data,
+                )}
+            </ThemeLayout>
+        );
+    }
+    else {
 
-    return getLayout(
-        <ThemeLayout>
-            <Component {...pageProps} />
-        </ThemeLayout>
-    );
+        return (
+            <ThemeLayout data={props}>
+                <Component {...pageProps} />
+            </ThemeLayout>
+        );
+    }
 }

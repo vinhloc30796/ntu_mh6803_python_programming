@@ -1,24 +1,32 @@
+// React
 import React, { useEffect, useState } from "react";
-
+// Mantine
 import useStyles from "./_styles";
 import { Group, Card, Title, Text, Image } from "@mantine/core";
 
 // Owned Code
+import { 
+    init_coin,
+    init_start_date,
+    init_end_date,
+} from "./_consts";
 import BrushChart from "./_price_chart_brush";
-import { BaseCrypto, getLastPrice, dummyCrypto } from "./_price_chart_data";
+import { BaseCrypto, getLastPrice } from "./_price_chart_data";
 
-export type PriceChartProps = {
-    priceData: BaseCrypto[];
+export type PriceChartProps = { 
+    priceData: BaseCrypto[]; 
+    metrics: Object;
 };
 
 const PriceChart = (     
-    { priceData }: PriceChartProps,
+    { priceData, metrics }: PriceChartProps,
 ) => {
+
     const { classes, theme } = useStyles();
-    const [receivedPriceData, updateReceivedPriceData] = useState(dummyCrypto);
+    const [receivedPriceData, updateReceivedPriceData] = useState(priceData);
     useEffect(() => {
         updateReceivedPriceData(priceData);
-        console.log("in ../components/_price_chart.tsx: Type of priceData: ", typeof priceData, priceData);
+        // console.log("in ../components/_price_chart.tsx: Type of priceData: ", typeof priceData, priceData);
     }, [priceData]);
 
     return (
@@ -29,16 +37,39 @@ const PriceChart = (
                     height={320}
                     alt="Norway"
                 /> */}
-                <BrushChart width={640} height={320} priceData={receivedPriceData}/>
+                <BrushChart width={960} height={480} priceData={receivedPriceData}/>
             </Card.Section>
             <Card.Section className={classes.section}>
-                <Group position="apart" mt="md">
-                    <Text>Closing Price</Text>
-                    <Title order={3}>$ {getLastPrice(receivedPriceData)}</Title>
-                </Group>
+                <Title order={2}>Metrics</Title>
+                {
+                    // Map metrics to Text
+                    Object.keys(metrics).map((key) => {
+                        // If key contain "Price" then format in dollars
+                        if (key.includes("Price")) {
+                            return (
+                                // <Group position="apart" mt="md">
+                                //     <Text key={key}>{key}</Text>
+                                //     <Title order={3}>
+                                //         ${metrics[key].toFixed(2)}
+                                //     </Title>    
+                                // </Group>
+                                // returns nothing
+                                <></>
+                            )
+                        } else {
+                            return (
+                                <Group position="apart" mt="md">
+                                    <Text>{key}</Text> 
+                                    <Title order={4}>{metrics[key].toFixed(4)}</Title>
+                                </Group>
+                            );
+                        }
+                    })
+                }
             </Card.Section>
         </Card>
     );
 };
+
 
 export default PriceChart;
