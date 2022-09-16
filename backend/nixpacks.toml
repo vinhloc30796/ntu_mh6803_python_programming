@@ -1,0 +1,5 @@
+# nixpacks.toml
+
+[phases.build]
+aptPkgs = ['wget', 'python-tk', 'python3-tk', 'tk-dev']
+cmds = ['yarn run server:build']
