@@ -1,7 +1,5 @@
 # nixpacks.toml
 
-[phases.install]
-aptPkgs = ['wget', 'python-tk', 'python3-tk', 'python3.9-tk', 'tk-dev']
-
 [phases.build]
+nixPkgs = ['python3.9-tkinter']
 cmds = ['yarn run server:build']
