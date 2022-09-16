@@ -29,13 +29,6 @@ const Home: NextPage = () => {
                 </p>
 
                 <div className={styles.grid}>
-                    <a href="/prices" className={styles.card}>
-                        <Title order={2}>
-                            Cryptocurrency Historical Price &rarr;
-                        </Title>
-                        <p>Choose a coin & see its historical price!</p>
-                    </a>
-
                     <a href="/retire" className={styles.card}>
                         <Title order={2}>Retirement Calculator! &rarr;</Title>
                         <p>Check how long it would take you to retire!</p>
