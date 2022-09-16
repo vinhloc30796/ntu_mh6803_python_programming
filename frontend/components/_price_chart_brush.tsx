@@ -1,22 +1,28 @@
-import React, { useRef, useState, useMemo, useEffect } from "react";
+import React, { useRef, useState, useMemo, useEffect, useCallback } from "react";
 // import appleStock, { AppleStock } from "@visx/mock-data/lib/mocks/appleStock";
-import { scaleTime, scaleLinear } from "@visx/scale";
 import { Group } from "@visx/group";
+import { localPoint } from '@visx/event';
+import { scaleTime, scaleLinear } from "@visx/scale";
+import { AreaClosed, Line, Bar } from '@visx/shape';
+// Brush
 import { Brush } from "@visx/brush";
-import BaseBrush, {
-    BaseBrushState,
-    UpdateBrush,
-} from "@visx/brush/lib/BaseBrush";
-import { BrushHandleRenderProps } from "@visx/brush/lib/BrushHandle";
 import { Bounds } from "@visx/brush/lib/types";
+import BaseBrush, { BaseBrushState, UpdateBrush } from '@visx/brush/lib/BaseBrush';
+import { BrushHandleRenderProps } from "@visx/brush/lib/BrushHandle";
+// Fills
 import { PatternLines } from "@visx/pattern";
 import { LinearGradient } from "@visx/gradient";
 import { ScaleSVG } from "@visx/responsive";
+// Tooltip
+import { useTooltip, withTooltip, Tooltip, TooltipWithBounds, defaultStyles } from '@visx/tooltip';
+import { WithTooltipProvidedProps } from '@visx/tooltip/lib/enhancers/withTooltip';
+
+// Math
 import { min, max, extent } from "d3-array";
 
 // Owned
 import AreaChart from "./_price_chart_area";
-import { dummyCrypto, BaseCrypto, getPrice, getDate } from "./_price_chart_data";
+import { dummyCrypto, BaseCrypto, getPrice, getDate, bisectDate, formatDate } from "./_price_chart_data";
 
 // Initialize some variables
 // const stock = appleStock.slice(1000);
@@ -34,8 +40,13 @@ const selectedBrushStyle = {
     stroke: "white",
 };
 
-// const getDate = (d: AppleStock) => new Date(d.date);
-// const getStockValue = (d: AppleStock) => d.close;
+const tooltipStyles = {
+    ...defaultStyles,
+    background,
+    border: '1px solid white',
+    color: 'white',
+};
+  
 
 export type BrushProps = {
     priceData: BaseCrypto[];
@@ -43,6 +54,7 @@ export type BrushProps = {
     height: number;
     margin?: { top: number; right: number; bottom: number; left: number };
     compact?: boolean;
+    tooltipData?: BaseCrypto;
 };
 
 function BrushChart({
@@ -56,7 +68,18 @@ function BrushChart({
         right: RIGHT_MARGIN,
     },
     compact = false,
+    tooltipData,
 }: BrushProps) {
+    // Tooltips
+    const {
+        tooltipLeft,
+        tooltipTop,
+        tooltipOpen,
+        showTooltip,
+        hideTooltip,
+    } = useTooltip();
+    
+
     // Rerender component when stock changes
     const [receivedPriceData, updateReceivedPriceData] = useState(dummyCrypto);
     const [filteredStock, setFilteredStock] = useState(receivedPriceData);
@@ -81,6 +104,7 @@ function BrushChart({
     };
 
     const innerHeight = height - margin.top - margin.bottom; //margin.bottom;
+    const innerWidth = width - margin.left - margin.right;
     const topChartBottomMargin = compact
         ? chartSeparation / 2
         : chartSeparation + 10;
@@ -125,7 +149,7 @@ function BrushChart({
         () =>
             scaleLinear<number>({
                 range: [yMax, yMin],
-                domain: [min(filteredStock, getPrice), max(filteredStock, getPrice) || 0],
+                domain: [min(filteredStock, getPrice) || 0, max(filteredStock, getPrice) || 100000],
                 nice: true,
             }),
         [yMax, filteredStock, receivedPriceData]
@@ -142,7 +166,8 @@ function BrushChart({
         () =>
             scaleLinear({
                 range: [yBrushMax, 0],
-                domain: [min(receivedPriceData, getPrice), max(receivedPriceData, getPrice) || 0],
+                domain: [min(receivedPriceData, getPrice) || 0, max(receivedPriceData, getPrice) || 100000],
+                // domain: [, max(receivedPriceData, getPrice) || 0],
                 nice: true,
             }),
         [yBrushMax, receivedPriceData]
@@ -153,7 +178,28 @@ function BrushChart({
             start: { x: brushDateScale(getDate(receivedPriceData[1])) },
             end: { x: brushDateScale(getDate(receivedPriceData[20])) },
         }),
-        [brushDateScale, receivedPriceData]
+        [brushDateScale,  receivedPriceData, priceData]
+    );
+
+    // tooltip handler
+    const handleTooltip = useCallback(
+        (event: React.TouchEvent<SVGRectElement> | React.MouseEvent<SVGRectElement>) => {
+          const { x } = localPoint(event) || { x: 0 };
+          const x0 = dateScale.invert(x);
+          const index = bisectDate(filteredStock, x0, 1);
+          const d0 = filteredStock[index - 1];
+          const d1 = filteredStock[index];
+          let d = d0;
+          if (d1 && getDate(d1)) {
+            d = x0.valueOf() - getDate(d0).valueOf() > getDate(d1).valueOf() - x0.valueOf() ? d1 : d0;
+          }
+          showTooltip({
+            tooltipData: d,
+            tooltipLeft: x,
+            tooltipTop: stockScale(getPrice(d)),
+          });
+        },
+        [showTooltip, stockScale, dateScale],
     );
     
 
@@ -184,6 +230,42 @@ function BrushChart({
                     yScale={stockScale}
                     gradientColor={background2}
                 />
+                <Bar
+                    x={margin.left}
+                    y={margin.top}
+                    width={innerWidth}
+                    height={innerHeight}
+                    fill="transparent"
+                    rx={14}
+                    onTouchStart={handleTooltip}
+                    onTouchMove={handleTooltip}
+                    onMouseMove={handleTooltip}
+                    onMouseLeave={() => hideTooltip()}
+                />
+                {tooltipData && (
+                    <div>
+                    <TooltipWithBounds
+                        key={Math.random()}
+                        top={tooltipTop - 12}
+                        left={tooltipLeft + 12}
+                        style={tooltipStyles}
+                    >
+                        {`$${getPrice(tooltipData)}`}
+                    </TooltipWithBounds>
+                    <Tooltip
+                        top={innerHeight + margin.top - 14}
+                        left={tooltipLeft}
+                        style={{
+                        ...defaultStyles,
+                        minWidth: 72,
+                        textAlign: 'center',
+                        transform: 'translateX(-50%)',
+                        }}
+                    >
+                        {formatDate(getDate(tooltipData))}
+                    </Tooltip>
+                    </div>
+                )}
                 <AreaChart
                     hideBottomAxis
                     hideLeftAxis

@@ -1,4 +1,5 @@
 # Base
+from multiprocessing.sharedctypes import Value
 from typing import Dict, List
 
 # Plotting
@@ -78,12 +79,17 @@ def show_retirement_goal(
     granularity: str = "daily",
 ) -> float:
     # Calculate
-    years_to_retire: float = calculate_years_to_retire(
-        starting_asset=starting_asset,
-        retirement_goal=retirement_goal,
-        prices=prices,
-        granularity=granularity,
-    )
+    try:
+        years_to_retire: float = calculate_years_to_retire(
+            starting_asset=starting_asset,
+            retirement_goal=retirement_goal,
+            prices=prices,
+            granularity=granularity,
+        )
+    except ValueError as e:
+        print(e)
+        return -1
+
     years = int(years_to_retire)
     months = int(years_to_retire % 1.0 * 12)
     print(
