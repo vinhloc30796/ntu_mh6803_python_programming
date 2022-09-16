@@ -44,8 +44,8 @@ def test_calc_retirement():
 
     # Some years
     test_some_years = [
-        (1, 2, [1, 1.001], 3.828014159422275),
-        (1, 3, [1, 2, 3, 4, 5, 6, 7, 1.01], 4.03003608075736),
+        (1, 2, [1, 1.001], 1.8999827299093135),
+        (1, 3, [1, 2, 3, 4, 5, 6, 7, 1.01], 2.11744484478817),
     ]
     for start, end, prices, expected in test_some_years:
         assert (
