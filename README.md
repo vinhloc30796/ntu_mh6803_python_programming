@@ -84,6 +84,7 @@ From the `/backend` directory:
     * There are two routes available:
         * `/` - the home page
         * `/retire` - the price chart & retirement calculator page
+* Video: https://www.loom.com/share/e6e4781c783644abb02901d29e943623
 
 ### Jupyter Notebook
 
