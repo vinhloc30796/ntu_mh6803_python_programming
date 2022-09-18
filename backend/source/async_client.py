@@ -87,11 +87,19 @@ async def get_price(
         "from": start_unix,
         "to": end_unix,
     }
-    async with client.get(api_url + endpoint, params=params) as response:
+    '''async with client.get(api_url + endpoint, params=params) as response:
         response_dict = await response.json()
         prices = response_dict["prices"]
         print(f"Found prices {len(prices)}")
+        return prices'''
+    async with client.get(api_url + endpoint, params=params) as response:
+        response_dict = await response.json()
+    try:
+        async with response as response:
+            prices = response_dict["prices"]
         return prices
+    except:
+        raise ValueError("Error: No price history found. Did you enter a valid coin name?")
 
 
 async def parse_price(
