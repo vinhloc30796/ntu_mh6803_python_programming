@@ -50,13 +50,8 @@ async def get_coin_description(
         response_dict = await response.json()
     try:
         async with response as response:
-            description = response_dict["description"]["en"]
-        count_periods, idx = 0, 0
-        while count_periods < 2:
-            if description[idx] == ".":
-                count_periods += 1
-            idx += 1
-        return description[:idx]
+            description = response_dict["description"]["en"].split(". ")[:2]
+        return ". ".join(description) + "."
     except:
         raise ValueError(f"Error: No description found. Preview: {response}")
 
@@ -92,11 +87,19 @@ async def get_price(
         "from": start_unix,
         "to": end_unix,
     }
-    async with client.get(api_url + endpoint, params=params) as response:
+    '''async with client.get(api_url + endpoint, params=params) as response:
         response_dict = await response.json()
         prices = response_dict["prices"]
         print(f"Found prices {len(prices)}")
+        return prices'''
+    async with client.get(api_url + endpoint, params=params) as response:
+        response_dict = await response.json()
+    try:
+        async with response as response:
+            prices = response_dict["prices"]
         return prices
+    except:
+        raise ValueError("Error: No price history found. Did you enter a valid coin name?")
 
 
 async def parse_price(

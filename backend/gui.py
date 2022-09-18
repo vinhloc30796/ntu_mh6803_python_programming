@@ -1,6 +1,7 @@
 # Base
 import logging
 from typing import Dict, List, Any
+from datetime import datetime
 
 # CLI
 import asyncio
@@ -12,6 +13,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from ttkthemes import ThemedTk
 from PIL import Image, ImageTk
+from tkcalendar import DateEntry
 
 # Plot
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -32,8 +34,8 @@ logging.basicConfig(
 
 # Constants
 window_font = "Calibri"
-style_title = ("Arial", 10, "bold")
-style_parag = ("Arial", 10)
+style_title = ("Arial", 12, "bold")
+style_parag = ("Arial", 12)
 color_bg = "floralwhite"
 
 # Globals
@@ -41,6 +43,10 @@ time_prices: List = []
 prices: List[float] = []
 description = ""
 granularity = ""
+firstclick = True
+manualinput = ttk.Entry
+output_frame = ttk.Labelframe
+graph_frame = ttk.Labelframe
 
 
 def make_window() -> ThemedTk:
@@ -52,7 +58,7 @@ def make_window() -> ThemedTk:
     logo = ImageTk.PhotoImage(resize_logo, master=main_window)
     logo_label = tk.Label(main_window, image=logo)
     logo_label.image = logo
-    # logo_label.pack(side="top")
+    logo_label.grid(column=0, row=0, sticky='w', padx=400, pady=3)
 
     # Define Tkinter styles (buttons, labelframes etc)
     style = ttk.Style(main_window)
@@ -80,6 +86,9 @@ def make_window() -> ThemedTk:
 
 
 def make_coin_input_frame(main_window: ThemedTk) -> ttk.LabelFrame:
+
+    global manualinput
+    
     style = ttk.Style(main_window)
     style.configure("I.TLabel", background="whitesmoke")
     style.configure(
@@ -99,12 +108,17 @@ def make_coin_input_frame(main_window: ThemedTk) -> ttk.LabelFrame:
         text="User Inputs",
         style="I.TLabelframe",
     )
-    # input_frame.pack(fill="x", expand=True, side="top")
+    #input_frame.pack(fill="x", expand=True, side="top", padx=5, pady=2)
     input_frame.grid(
         row=0,
         column=0,
-        columnspan=2,
+        #columnspan=2,
+        sticky='w',
+        padx=10,
+        pady=3,
     )
+    manualinput = ttk.Entry(input_frame, width=10)
+
     return input_frame
 
 
@@ -112,61 +126,63 @@ def make_coin_input_entries(coin_input_frame: ttk.LabelFrame) -> Dict[str, str]:
     # Ask for user input
     offset = 3
     messages = {
-        "coin": "Please select one coin (e.g. bitcoin, ethereum): ",
-        "start_date": "Please enter a start date for the coin selected (yyyy-mm-dd format, eg. 2021-12-31): ",
-        "end_date": "Please enter an end date for the coin selected (yyyy-mm-dd format, eg. 2021-12-31): ",
+        "coin": "Please select one coin: ",
+        "start_date": "Please enter a start date for the coin selected (dd/mm/yyyy format, eg. 31/12/2021): ",
+        "end_date": "Please enter an end date for the coin selected (dd/mm/yyyy format, eg. 31/12/2021): ",
     }
     coin_inputs = {}
+    coinlist = ["Bitcoin", "Ethereum", "Tether",
+                "Dogecoin", "Cardano", "Solana",
+                "Polkadot", "TRON", "Uniswap",
+                "Litecoin", "Other"]
     for i, (key, message) in enumerate(messages.items()):
         label = ttk.Label(
             coin_input_frame,
             text=message,
             font=style_title,
             style="I.TLabel",
+            width=85,
         )
-        label.grid(row=i + offset, column=0, sticky="w", pady=2)
-        input_box = ttk.Entry(coin_input_frame, width=30)
-        input_box.grid(row=i + offset, column=1, sticky="w", pady=2)
+        label.grid(row=i + offset, column=0, sticky="w", padx=5, pady=2)
+        if key == 'coin':
+            input_box = tk.StringVar(coin_input_frame, 'None')
+            coinvar = tk.OptionMenu(coin_input_frame, input_box,
+                                 *coinlist, command=add_entry)
+            input_box.set('Bitcoin')
+            coinvar.grid(row=i + offset, column=1, padx=50, pady=2)
+        else:
+            input_box = DateEntry(coin_input_frame, selectmode='day')
+            input_box.grid(row=i + offset, column=1, padx=5, pady=2)
         coin_inputs[key] = input_box
     print(coin_inputs)
     return coin_inputs
 
 
+# Function to add manual input box if user wishes to search for other coins
+def add_entry(value: str):
+    if value == 'Other':
+        manualinput.grid(row=3, column=2, padx=5)
+
+        
 def pull_prices(
     async_loop,
     coin: str,
     start_date: str,
     end_date: str,
-):
-    """ Button-Event-Handler starting the asyncio part. """
-    threading.Thread(
-        target=_thread_pull_prices, 
-        args=(
-            async_loop,
-            coin,
-            start_date,
-            end_date,
-        )
-    ).start()
-
-
-def _thread_pull_prices(
-    async_loop,
-    coin: str,
-    start_date: str,
-    end_date: str,
+    manualinput: str,
 ):
     async_loop.run_until_complete(async_pull_prices(
         coin,
         start_date,
         end_date,
+        manualinput,
     ))
-
 
 async def async_pull_prices(
     coin: str,
     start_date: str,
     end_date: str,
+    manualinput: str
 ):
     """ Creating and starting 10 tasks. """
     global time_prices
@@ -182,18 +198,45 @@ async def async_pull_prices(
         granularity = get_granularity(start_date, end_date)
         logging.info("DATA PULL DONE!")
     except Exception as e:
+        manualinput.delete(0, 'end')
         messagebox.showerror("Error", str(e))
     finally:
         await client.close()
 
 
+def pull_description(
+    async_loop,
+    coin: str,
+):
+    async_loop.run_until_complete(async_pull_description(
+        coin
+    ))
+
+    
+async def async_pull_description(
+    coin: str
+):
+    """ Creating and starting 10 tasks. """
+    global description
+    client = get_async_client()
+    
+    try:
+        description = await get_coin_description(client, coin)
+        logging.info("DESC PULL DONE!")
+    except Exception as e:
+        messagebox.showerror("Error", str(e))
+    finally:
+        await client.close()
+        
+
 def button_handler_coin_show_chart(
     main_window: ThemedTk,
     loop,
-    coin_input_frame: ttk.LabelFrame, 
+    coin_input_frame: ttk.LabelFrame,
     coin_inputs: Dict[str, str]
 ) -> None:
     print(coin_inputs)
+
     # Submit the values
     submit_coin_button = ttk.Button(
         coin_input_frame,
@@ -208,7 +251,7 @@ def button_handler_coin_show_chart(
         style="W.TButton",
     )
     submit_coin_button.grid(row=6, column=1)
-
+        
     # Input frame
     return None
 
@@ -224,34 +267,74 @@ def trigger_render_chart(
     global time_prices
     global prices
     global granularity
+    global description
+    global firstclick
+    global output_frame
+    global graph_frame
     
+    #convert coin and date format
+    if coin == "Other":
+        coin = manualinput.get().lower().replace(" ","")
+    else:
+        manualinput.delete(0, 'end')
+        coin = coin.lower().replace(" ","")
+    startdatelist = start_date.split('/')
+    start_date = startdatelist[2]+'-'+startdatelist[1]+'-'+startdatelist[0]
+    enddatelist = end_date.split('/')
+    end_date = enddatelist[2]+'-'+enddatelist[1]+'-'+enddatelist[0]
+
+    # Exception handling if date format is wrong
+    dateformat = '%Y-%m-%d'
+
+    try:
+        datetime.strptime(start_date, dateformat)
+        datetime.strptime(end_date, dateformat)
+    except ValueError:
+        messagebox.showerror('Error!', 'You have entered a value other than the acceptable date format of dd/mm/yyyy!')
+
+    # Exception handling if end_date is before start_date (using if statement)
+    if (datetime.strptime(start_date, dateformat) >= datetime.strptime(end_date, dateformat)):
+        messagebox.showerror('Error!', 'Your choice of end date is before the start date! Please try again.')
+            
     logging.info("SUBMITTED!")
-    pull_prices(loop, coin, start_date, end_date)
+    pull_prices(loop, coin, start_date, end_date, manualinput)
+    pull_description(loop, coin)
 
     # Render the chart
     fig, ax = show_chart(
         time_prices=time_prices,
         granularity=granularity,
     )
-    chart_window = tk.Toplevel(main_window)
-    chart_canvas = FigureCanvasTkAgg(fig, master=chart_window)
-    # chart_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-    chart_canvas.get_tk_widget().grid(row=0, column=0)
-    chart_canvas.draw()
-
+    if firstclick == False:
+        #for widget in output_frame.winfo_children():
+            #widget.destroy()
+        #for widget in graph_frame.winfo_children():
+            #widget.destroy()
+        output_frame.grid_forget()
+        graph_frame.grid_forget()
     # Render the metrics & description
-    output_frame = make_output_frame(main_window)
+    output_frame, graph_frame = make_output_frame(main_window)
     trigger_show_metrics(output_frame)    
     trigger_show_description(coin, output_frame)
+    
+    chart_canvas = FigureCanvasTkAgg(fig, master=graph_frame)
+    chart_canvas.get_tk_widget().pack()
+    chart_canvas.draw()
 
     # Retirement calcs
     qns_frame = make_retirement_next_step_frame(main_window)
     frame_output_retirement = trigger_retirement_next_step(main_window, qns_frame, prices, granularity)
 
-    return prices, granularity
+    firstclick = False
+
+    return prices, granularity, description
 
 
 def make_output_frame(main_window: ThemedTk) -> ttk.LabelFrame:
+
+    global output_frame
+    global graph_frame
+
     # Output frame
     style = ttk.Style(main_window)
     style.configure(
@@ -272,14 +355,44 @@ def make_output_frame(main_window: ThemedTk) -> ttk.LabelFrame:
         text="Results",
         style="O.TLabelframe",
     )
-    # output_frame.pack(fill="x", expand=True)
+    #output_frame.pack(fill="x", expand=True, padx=5, pady=5)
     output_frame.grid(
         row=1,
         column=0,
-        columnspan=2,
+        #columnspan=2,
+        sticky='w',
+        padx=10,
+        pady=3,
     )
     style.configure("O.TLabel", background=color_bg)
-    return output_frame
+
+    # Graph frame
+    style.configure(
+        'G.TLabelframe',
+        background='whitesmoke',
+        relief='solid',
+        borderwidth=2,
+        )
+    style.configure(
+        'G.TLabelframe.Label',
+        font=('calibri', 14, 'bold'),
+        background='#ee911d'
+        )
+    # Init graph frame
+    graph_frame = ttk.LabelFrame(
+        main_window,
+        text='Historical Prices',
+        style='G.TLabelframe'
+        )
+    graph_frame.grid(
+        column=0,
+        row=2,
+        sticky = 'W',
+        padx=10,
+        pady= 3)
+    style.configure('G.TLabel', background='whitesmoke')
+    
+    return output_frame, graph_frame
 
 
 def trigger_show_metrics(
@@ -310,6 +423,7 @@ def trigger_show_metrics(
             text=label_str,
             font=style_title,
             style=style_name,
+            width=20,
         )
         metric_label.grid(row=tk_row_num, column=0, sticky="w", pady=2)
         # value
@@ -318,8 +432,9 @@ def trigger_show_metrics(
             text=value_str,
             font=style_parag,
             style=style_name,
+            width=20,
         )
-        value_label.grid(row=tk_row_num, column=1, sticky="w", pady=2)
+        value_label.grid(row=tk_row_num, column=1, sticky="w", pady=2, padx=32)
         tk_row_num += 1
 
     return None
@@ -334,23 +449,34 @@ def trigger_show_description(
     client = get_async_client()
 
     # Chart
-    try:
+    '''try:
         ## Price & Description
         description = get_coin_description(client, coin)
     except Exception as e:
         messagebox.showerror("Error", str(e))
     finally:
-        loop.run_until_complete(client.close())
+        loop.run_until_complete(client.close())'''
 
     # Display
     style_name = "O.TLabel"
+    # Label
     description_label = ttk.Label(
         output_frame,
+        text='Coin Description:',
+        font=style_title,
+        style=style_name,
+        width=20,
+    )
+    description_label.grid(row=16, column=0, sticky="w", pady=2)
+    # Value
+    description_value = ttk.Label(
+        output_frame,
         text=description,
+        wraplength=700,
         font=style_title,
         style=style_name,
     )
-    description_label.grid(row=1, column=0, columnspan=2, sticky="w", pady=2)
+    description_value.grid(row=16, column=1, columnspan=2, sticky="w", pady=2, padx=32)
 
 
 ####################
@@ -376,11 +502,14 @@ def make_retirement_next_step_frame(main_window: ThemedTk) -> ttk.LabelFrame:
         text="Question",
         style="Q.TLabelframe",
     )
-    # qns_frame.pack(fill="x", side="bottom")
+    #qns_frame.pack(fill="x", side="bottom", padx=5, pady=5)
     qns_frame.grid(
-        row=3,
+        row=4,
         column=0,
-        columnspan=2,
+        #columnspan=2,
+        sticky='w',
+        padx=10,
+        pady=3,
     )
     style.configure(
         "Q.TLabel",
@@ -397,6 +526,8 @@ def trigger_retirement_next_step(
     prices: List[float],
     granularity: str,
 ) -> ttk.Frame:
+
+    global firstclick
     # Ask user if interested to plan their own wealth
     ask_user_if_plan_wealth = ttk.Label(
         qns_frame,
@@ -404,8 +535,9 @@ def trigger_retirement_next_step(
         + " (Clicking 'No' exits the program entirely)",
         font=("Arial", 10),
         style="Q.TLabel",
+        width=93,
     )
-    ask_user_if_plan_wealth.grid(row=18, column=0, sticky="w", pady=2)
+    ask_user_if_plan_wealth.grid(row=18, column=0, sticky="n", pady=2)
 
     get_rich_button = ttk.Button(
         qns_frame,
@@ -417,12 +549,14 @@ def trigger_retirement_next_step(
         ),
         style="W.TButton",
     )
-    get_rich_button.grid(row=18, column=2, padx=5, sticky="e")
+    get_rich_button.grid(row=18, column=2, padx=14, sticky="n")
 
     remain_poor_button = ttk.Button(
         qns_frame, text="No", command=main_window.destroy, style="N.TButton"
     )
-    remain_poor_button.grid(row=18, column=3, padx=5, sticky="e")
+    remain_poor_button.grid(row=18, column=3, padx=14, sticky="n")
+
+    firstclick = False
 
 
 def render_retirement_winđow(
@@ -499,10 +633,10 @@ def make_retirement_frame(main_window: ThemedTk) -> ttk.LabelFrame:
     start_msg = ttk.Label(
         wealth_input_frame,
         text="Please enter your current net worth: ",
-        font=("Arial", 10),
+        font=("Arial", 12),
         style="I.TLabel",
     )
-    start_msg.grid(row=0, column=0, pady=2)
+    start_msg.grid(row=0, column=0, pady=2, sticky='w')
 
     starting_asset_entry = ttk.Entry(wealth_input_frame)
     starting_asset_entry.grid(row=0, column=1, pady=2)
@@ -511,10 +645,10 @@ def make_retirement_frame(main_window: ThemedTk) -> ttk.LabelFrame:
     goal_msg = ttk.Label(
         wealth_input_frame,
         text="Please enter the retirement monetary goal you want to achieve: ",
-        font=("Arial", 10),
+        font=("Arial", 12),
         style="I.TLabel",
     )
-    goal_msg.grid(row=1, column=0, pady=2)
+    goal_msg.grid(row=1, column=0, pady=2, sticky='w')
 
     retirement_goal_entry = ttk.Entry(wealth_input_frame)
     retirement_goal_entry.grid(row=1, column=1, pady=2)
@@ -523,7 +657,7 @@ def make_retirement_frame(main_window: ThemedTk) -> ttk.LabelFrame:
     wealth_attainment_time = ttk.Label(
         wealth_output_frame,
         text="",
-        font=("Arial", 10),
+        font=("Arial", 12),
         wraplength=350,
         style="O.TLabel",
     )
@@ -559,11 +693,11 @@ def trigger_show_retirement(
                 starting_asset=float(starting_asset_entry.get()),
                 retirement_goal=float(retirement_goal_entry.get()),
                 granularity=granularity,
-            )
-        ],
-        style="W.TButton",
-    )
-    submit_wealth_button.grid(row=3, column=1)
+                )
+            ],
+            style="W.TButton",
+        )
+    submit_wealth_button.grid(row=3, column=1, sticky='n')
 
 
 def trigger_exit_button(
@@ -577,7 +711,7 @@ def trigger_exit_button(
         command=wealth_window.destroy,
         style="N.TButton",
     )
-    exit_program_button.grid(row=7, column=2, sticky="e", padx=10, pady=2)
+    exit_program_button.grid(row=7, column=4, sticky="e", padx=230, pady=2)
 
     wealth_window.mainloop()
 
@@ -592,6 +726,14 @@ def render_retirement_config(
     retirement_goal: float,
     granularity: str = "daily",
 ) -> float:
+
+    # Exception handling for wealth goal lower than net worth
+    if starting_asset >= retirement_goal:
+        messagebox.showerror('Error!', 'Your wealth goal is less than your net worth. Please input a wealth goal above that of your net worth.')
+
+    # Exception handling for negative wealth goal or net worth
+    if (starting_asset <=0) or (retirement_goal <= 0):
+        messagebox.showerror('Error!', 'Negative numbers detected! Please input positive figures only.')
 
     # Calculate
     years_to_retire: float = calculate_years_to_retire(
@@ -618,7 +760,7 @@ def main(loop) -> None:
     # Main screen
     main_window = make_window()
     main_window.title("Home")
-    main_window.geometry("950x600")
+    main_window.geometry("930x785")
 
     # Input & output screen
     coin_input_frame = make_coin_input_frame(main_window)
